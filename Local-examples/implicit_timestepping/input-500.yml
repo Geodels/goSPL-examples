@@ -17,7 +17,7 @@ spl:
     K: 2.0e-4
     d: 0.
     m: 0.5
-    fDa: 0.
+    G: 0.
 
 diffusion:
     hillslopeKa: 0.
