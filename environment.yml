@@ -32,7 +32,7 @@ dependencies:
   - jigsawpy
   - stripy
   - xesmf
-  - mpas-tools
+  - mpas_tools
   - pygmt
   - rasterio
   - pysheds
