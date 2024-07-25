@@ -1,0 +1,10 @@
+# mesh2D.jig config. file; created by JIGSAW's PYTHON interface 
+  VERBOSITY=1
+  GEOM_FILE=sombrero/mesh2D.msh
+  HFUN_FILE=sombrero/mesh2D-HFUN.msh
+  HFUN_SCAL=absolute
+  HFUN_HMAX=inf
+  HFUN_HMIN=0.0
+  MESH_FILE=sombrero/mesh2D-MESH.msh
+  MESH_DIMS=2
+  OPTM_QLIM=0.9375

@@ -5,6 +5,7 @@ domain:
     flowdir: 1
     bc: '0000'
     seadepo: False
+    # advect: 'iioe2'
 
 time:
     start: 0.
@@ -16,11 +17,16 @@ spl:
     K: 4.0e-6
     d: 0.
     m: 0.5
-    G: 0.
+    fDa: 0.
 
 diffusion:
-    hillslopeKa: 0.1
+    hillslopeKa: 0.01
     hillslopeKm: 0.2
+
+# tectonics:
+#     - start: 0.
+#       end: 1.e5
+#       hdisp: ['data/tec', 'uv']
 
 sea:
     position: -100.

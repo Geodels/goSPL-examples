@@ -333,12 +333,11 @@ class mapOutputs:
                 cells_edges = Tmesh.cells["edges"]
 
             # Finite volume discretisation
-            self.ngbID, edgeMax = definetin(
+            self.ngbID, area = definetin(
                 self.vertices,
                 cells_nodes,
                 cells_edges,
                 edges_nodes,
-                area,
                 cc.T,
             )
 

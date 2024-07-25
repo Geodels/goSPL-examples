@@ -1,9 +1,10 @@
 name: Test stratigraphy 
 
 domain:
-    npdata: ['inputs/mesh2','v','c','z']
+    npdata: ['test_mesh7/gospl_mesh','v','c','z']
     bc: '0000'
-    flowdir: 2
+    flowdir: 5
+    # advect: 'iioe1' #'upwind'
 
 time:
     start: 0.
@@ -11,16 +12,18 @@ time:
     tout: 1.e4
     dt: 5.e3
     strat: 5.e3
+    rstep: 20
 
 spl:
     K: 4.e-5
     d: 0.42
     m: 0.45
+    # G: 2.0
 
 diffusion:
-    hillslopeKa: 1
-    hillslopeKm: 2
-    nonlinKm: 500.
+    hillslopeKa: 0.1
+    hillslopeKm: 0.8
+    nonlinKm: 4000.
     clinSlp: 5.e-4
 
 flexure: 
@@ -37,9 +40,14 @@ climate:
   - start: 0.
     uniform: 1
 
+# tectonics:
+#     - start: 0.
+#       end: 2.5e5
+#       hdisp: ['test_mesh7/vel', 'uv']
+
 compaction:
     phis: 0.49
     z0s: 3700.0
 
 output:
-    dir: 'strati_sim'
+    dir: 'strati_sim1'

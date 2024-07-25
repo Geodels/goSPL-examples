@@ -30,4 +30,4 @@ climate:
     map: ['vars_25_80/rain250','r']
 
 output:
-    dir: 'silico_refined'
+    dir: 'silico_refined2'

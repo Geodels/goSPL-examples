@@ -1,0 +1,50 @@
+name: Test stratigraphy 
+
+domain:
+    npdata: ['test_mesh7/gospl_mesh','v','c','z']
+    bc: '0000'
+    flowdir: 5
+    advect: 'iioe2' #'upwind'
+
+time:
+    start: 0.
+    end: 2.5e5
+    tout: 1.e4
+    dt: 5.e3
+
+spl:
+    K: 4.e-5
+    d: 0.42
+    m: 0.45
+
+diffusion:
+    hillslopeKa: 0.1
+    hillslopeKm: 0.8
+    nonlinKm: 1000.
+    clinSlp: 5.e-4
+
+flexure: 
+    regdx: 1000.
+    thick: 10.e3
+    rhoc: 2800.0
+    rhoa: 3150.0
+
+sea:
+    position: -30.
+    curve: 'inputs/sealevel.csv'
+
+climate:
+  - start: 0.
+    uniform: 1
+
+tectonics:
+    - start: 0.
+      end: 2.5e5
+      hdisp: ['test_mesh7/vel', 'uv']
+
+compaction:
+    phis: 0.49
+    z0s: 3700.0
+
+output:
+    dir: 'strati_sim_advect'

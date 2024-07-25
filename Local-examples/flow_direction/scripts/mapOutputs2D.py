@@ -313,8 +313,8 @@ class mapOutputs:
             self.cells = mesh_struct[self.infoCells]
 
             Tmesh = meshplex.MeshTri(self.vertices, self.cells)
-            area = np.abs(Tmesh.control_volumes)
-            area[np.isnan(area)] = 1.0
+            # area = np.abs(Tmesh.control_volumes)
+            # area[np.isnan(area)] = 1.0
 
             # Voronoi and simplices declaration
             Tmesh.create_edges()
@@ -333,12 +333,11 @@ class mapOutputs:
                 cells_edges = Tmesh.cells["edges"]
 
             # Finite volume discretisation
-            self.ngbID, edgeMax = definetin(
+            self.ngbID, area = definetin(
                 self.vertices,
                 cells_nodes,
                 cells_edges,
                 edges_nodes,
-                area,
                 cc.T,
             )
 
