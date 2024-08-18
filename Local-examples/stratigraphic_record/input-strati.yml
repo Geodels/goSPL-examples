@@ -1,10 +1,9 @@
 name: Test stratigraphy 
 
 domain:
-    npdata: ['test_mesh7/gospl_mesh','v','c','z']
-    bc: '0000'
+    npdata: ['inputs/gospl_mesh','v','c','z']
+    bc: '0101'
     flowdir: 5
-    # advect: 'iioe1' #'upwind'
 
 time:
     start: 0.
@@ -12,25 +11,31 @@ time:
     tout: 1.e4
     dt: 5.e3
     strat: 5.e3
-    rstep: 20
 
 spl:
     K: 4.e-5
     d: 0.42
     m: 0.45
-    # G: 2.0
 
 diffusion:
     hillslopeKa: 0.1
     hillslopeKm: 0.8
-    nonlinKm: 4000.
+    nonlinKm: 1000.
     clinSlp: 5.e-4
 
 flexure: 
+    method: 'FD'
     regdx: 1000.
-    thick: 10.e3
-    rhoc: 2800.0
-    rhoa: 3150.0
+    ninterp: 3
+    thick: 30.e3
+    rhoc: 2300.0
+    rhoa: 3300.0
+    young: 65e9
+    nu: 0.25
+    bcN: "Mirror"
+    bcE: "0Slope0Shear"
+    bcS: "Mirror"
+    bcW: "0Slope0Shear"
 
 sea:
     position: -30.
@@ -39,11 +44,6 @@ sea:
 climate:
   - start: 0.
     uniform: 1
-
-# tectonics:
-#     - start: 0.
-#       end: 2.5e5
-#       hdisp: ['test_mesh7/vel', 'uv']
 
 compaction:
     phis: 0.49

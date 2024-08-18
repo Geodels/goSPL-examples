@@ -1,10 +1,9 @@
-name: Test stratigraphy with continental sedimentation
+name: Test stratigraphy 
 
 domain:
-    # npdata: ['inputs/mesh2','v','c','z']
-    npdata: ['test_mesh7/gospl_mesh','v','c','z']
-    bc: '0000'
-    flowdir: 3
+    npdata: ['inputs/gospl_mesh','v','c','z']
+    bc: '0101'
+    flowdir: 5
 
 time:
     start: 0.
@@ -17,19 +16,13 @@ spl:
     K: 4.e-5
     d: 0.42
     m: 0.45
-    G: 5.
+    G: 3.
 
 diffusion:
-    hillslopeKa: 1
-    hillslopeKm: 2
-    nonlinKm: 2500.
+    hillslopeKa: 0.1
+    hillslopeKm: 0.8
+    nonlinKm: 1000.
     clinSlp: 5.e-4
-
-flexure: 
-    regdx: 1000.
-    thick: 10.e3
-    rhoc: 2800.0
-    rhoa: 3150.0
 
 sea:
     position: -30.
@@ -44,4 +37,4 @@ compaction:
     z0s: 3700.0
 
 output:
-    dir: 'strati_cont_sim1'
+    dir: 'strati_simG'

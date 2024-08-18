@@ -23,11 +23,6 @@ diffusion:
     hillslopeKa: 0.01
     hillslopeKm: 0.2
 
-# tectonics:
-#     - start: 0.
-#       end: 1.e5
-#       hdisp: ['data/tec', 'uv']
-
 sea:
     position: -100.
 

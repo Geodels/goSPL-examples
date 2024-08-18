@@ -1,0 +1,42 @@
+name: Global model 1 Myr evolution on refined UGRID
+
+domain:
+    npdata: ['vars_30/mesh','v','c','z']
+    flowdir: 2
+    seadepo: False
+    advect: 'interp'
+
+time:
+    start: 250.e6
+    end: 251.e6
+    tout: 1.e5
+    dt: 5.e4
+
+spl:
+    K: 1.e-6
+    d: 0.42
+    m: 0.5
+
+diffusion:
+    hillslopeKa: 0.5
+    hillslopeKm: 2.0
+    nonlinKm: 100.
+    clinSlp: 1.e-5
+
+sea:
+    position: 0.
+
+
+tectonics:
+    - start: 250.e6
+      end: 251.e6
+      hdisp: ['vars_30/forcing250','vxyz']
+      upsub: ['vars_30/forcing250','t']
+    #   zfit: ['vars_30/forcing250','nz']
+
+climate:
+  - start: 250.e6
+    map: ['vars_30/forcing250','r']
+
+output:
+    dir: 'silico_mvt'

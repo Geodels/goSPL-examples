@@ -1,0 +1,44 @@
+name: Global model 1 Myr evolution on refined UGRID
+
+domain:
+    npdata: ['vars_40/mesh','v','c','z']
+    flowdir: 3
+
+time:
+    start: 251.e6
+    end: 252.e6
+    tout: 1.e5
+    dt: 5.e4
+
+spl:
+    K: 3.e-6
+    d: 0.42
+    m: 0.5
+
+diffusion:
+    hillslopeKa: 0.5
+    hillslopeKm: 2.0
+    nonlinKm: 1.e4
+    clinSlp: 1.e-5
+
+flexure: 
+    method: 'global'
+    thick: 30.e3
+    rhoc: 2300.0
+    rhoa: 3300.0
+    young: 65e9
+    nu: 0.25
+
+temap:
+  - start: 251.e6
+    map: ['vars_40/forcing251', 'te']
+
+sea:
+    position: 0.
+
+climate:
+  - start: 251.e6
+    map: ['vars_40/forcing251','r']
+
+output:
+    dir: 'silico_mardep'
