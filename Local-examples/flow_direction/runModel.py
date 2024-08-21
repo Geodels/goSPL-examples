@@ -5,7 +5,8 @@ from gospl.model import Model as sim
 parser = argparse.ArgumentParser(
     description="This is a simple entry to run goSPL model.", add_help=True
 )
-parser.add_argument("-i", "--input", help="Input file name (YAML file)", required=True)
+parser.add_argument("-i", "--input", help="Input file name (YAML file)",
+                    required=True)
 parser.add_argument(
     "-v",
     "--verbose",

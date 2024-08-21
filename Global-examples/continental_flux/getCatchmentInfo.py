@@ -15,7 +15,8 @@ parser = argparse.ArgumentParser(
     description="This is a simple entry to extract outflow from goSPL model.",
     add_help=True,
 )
-parser.add_argument("-i", "--input", help="Input file name (csv file)", required=True)
+parser.add_argument("-i", "--input", help="Input file name (csv file)",
+                    required=True)
 parser.add_argument("-o", "--output", help="Output folder", required=True)
 parser.add_argument(
     "-v",
@@ -42,7 +43,7 @@ for f in range(len(df)):
     ncfile = df["netcdf"].iloc[f]
 
     if MPIrank == 0 and args.verbose:
-        print("\nOpen output ", ncfile,flush=True)
+        print("\nOpen output ", ncfile, flush=True)
 
     dataset = xr.open_dataset(ncfile)
     basinNb = dataset.basinID.values.max()
@@ -70,7 +71,8 @@ for f in range(len(df)):
     stop = (MPIrank + 1) * count + min(MPIrank + 1, remainder)
 
     if MPIrank == 0 and args.verbose:
-        print("  +  Nb of basins", basinNb - 1, " - approx. nb per CPU ", count,flush=True)
+        print("  +  Nb of basins", basinNb - 1, " - approx. nb per CPU ",
+              count, flush=True)
 
     flowdata = np.zeros((basinNb, 3)) - 500.0
     seddata = np.zeros((basinNb, 3)) - 500.0
@@ -111,7 +113,8 @@ for f in range(len(df)):
         }
         df2 = pd.DataFrame(data)
         df2 = df2.drop(df2[df2.lon < -180].index)
-        df2.to_csv(args.output + "/sed" + str(step) + ".csv", index_label="basin")
+        df2.to_csv(args.output + "/sed" + str(step) + ".csv",
+                   index_label="basin")
 
     # Flow discharge
     lon = flowdata[:, 0].ravel()
@@ -128,7 +131,9 @@ for f in range(len(df)):
         }
         df2 = pd.DataFrame(data)
         df2 = df2.drop(df2[df2.lon < -180].index)
-        df2.to_csv(args.output + "/flow" + str(step) + ".csv", index_label="basin")
+        df2.to_csv(args.output + "/flow" + str(step) + ".csv",
+                   index_label="basin")
 
     if MPIrank == 0 and args.verbose:
-        print(" +  File execution took (%0.02f seconds)" % (process_time() - t0),flush=True)
+        print(" +  File execution took (%0.02f seconds)" %
+              (process_time() - t0), flush=True)

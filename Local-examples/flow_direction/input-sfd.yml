@@ -1,4 +1,4 @@
-name: Test flow direction
+name: Test flow direction SFD
 
 domain:
     npdata: ['data/sombrero','v','c','z']

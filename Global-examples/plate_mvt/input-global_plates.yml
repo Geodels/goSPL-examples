@@ -1,4 +1,4 @@
-name: Global model 1 Myr evolution on refined UGRID
+name: Global model 1 Myr evolution with plate displacement
 
 domain:
     npdata: ['vars_30/mesh','v','c','z']
@@ -25,7 +25,6 @@ diffusion:
 
 sea:
     position: 0.
-
 
 tectonics:
     - start: 250.e6

@@ -1,4 +1,4 @@
-name: gospl-environment
+name: gospl
 channels:
   - conda-forge
   - defaults
@@ -45,4 +45,5 @@ dependencies:
   - pyproj 
   - triangle
   - pip:
-    - git+https://github.com/Geodels/gospl.git@development
+    - git+https://github.com/Geodels/isoFlex.git
+    - git+https://github.com/Geodels/gospl.git@2024.09.01

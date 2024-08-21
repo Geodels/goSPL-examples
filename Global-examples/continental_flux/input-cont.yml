@@ -1,4 +1,4 @@
-name: Global model 1 Myr evolution on refined UGRID
+name: Global model 1 Myr evolution without marine deposition on refined UGRID
 
 domain:
     npdata: ['vars_25_80/mesh','v','c','z']

@@ -17,7 +17,8 @@ from gospl._fortran import definetin
 
 class mapOutputs:
     def __init__(
-        self, path=None, filename=None, step=None, uplift=True, flex=False, model="spherical"
+        self, path=None, filename=None, step=None, uplift=True, flex=False,
+        model="spherical"
     ):
 
         # Check input file exists

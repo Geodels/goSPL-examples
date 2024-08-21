@@ -17,6 +17,11 @@ Series of examples to illustrate the functionalities of goSPL.
 
 [![DOI](https://joss.theoj.org/papers/10.21105/joss.02804/status.svg)](https://doi.org/10.21105/joss.02804)
 
+## Installation via Docker
+
+
+
+
 ## Installation via Conda
 
 One of the simplest way to install not only goSPL, but required dependencies  is with [Anaconda](https://docs.continuum.io/anaconda/), a cross-platform (Linux, Mac OS X, Windows) Python distribution for data analytics and scientific computing.
@@ -65,7 +70,7 @@ To put your self inside this environment run::
 
 
 ```console
-    source activate gospl-environment
+    conda activate gospl
 ```
 
 To install other packages, jupyter for example::
@@ -76,5 +81,7 @@ To install other packages, jupyter for example::
 
 Running goSPL-examples 
 ------------------------------------
+
+### Anaconda install 
 
 After your environment has been activated, you can either use VS-code or jupyter for running those examples on your local computer. 
