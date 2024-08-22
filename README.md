@@ -19,8 +19,38 @@ Series of examples to illustrate the functionalities of goSPL.
 
 ## Installation via Docker
 
+The goSPL image contains all the dependencies and configuration files required to run the examples.
 
+The ``gospl:2024.09.01`` is required for running those examples.
 
+##### Pulling the image
+
+Once you have installed Docker on your system, you can ``pull`` the
+[goSPL official image](https://hub.docker.com/u/geodels) as follow::
+
+```bash
+  docker pull geodels/gospl:2024.09.01
+```
+##### Starting the container from a terminal
+
+You can then start a docker container (an instance of
+an image)::
+
+```bash
+  docker run -it -p 8888:8888 -d -v localDIR:/notebooks
+```
+where `localDIR` is the directory that contains the examples folder `goSPL-examples`.
+
+Once Docker is running, you could open the Jupyter notebooks on a web browser at the following address: `http://localhost:8888 <http://localhost:8888>`_. Going into the `/notebooks` folder you will access your ``localDIR`` directory.
+
+To run goSPL, you will need to use the terminal from the Jupyter interface. To activate the goSPL environment where all the libraries are installed you will have to run the following command:
+```bash
+  conda activate gospl
+```
+
+Depending on your operating system, you will be able to configure the docker application to set your resources: CPUs, memory, swap, or Disk image size. This will improve the performance of the run.
+
+> Note that you could use the Dashboard from Docker instead of passing through the terminal to download the goSPL Docker image.
 
 ## Installation via Conda
 
@@ -34,6 +64,8 @@ Another advantage to installing Anaconda is that you don't need admin rights to 
 
 After getting Anaconda installed, the user will have already access to some essential Python packages and will be able to install a functioning goSPL environment by following the directives below.
 
+
+### Anaconda install 
 
 Building goSPL-examples environment
 ------------------------------------
@@ -79,9 +111,8 @@ To install other packages, jupyter for example::
     conda install jupyter
 ```
 
-Running goSPL-examples 
-------------------------------------
-
-### Anaconda install 
-
 After your environment has been activated, you can either use VS-code or jupyter for running those examples on your local computer. 
+
+## Running goSPL-examples 
+
+The series of examples provided here are related to the ``2024.09.01`` goSPL branch and consist in simple local and global models that illustrate the main capabilities of the code. You might want to start with the local example called `stratigraphic_record` and the global example called `continental_flux`.
