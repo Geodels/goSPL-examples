@@ -64,8 +64,7 @@ Another advantage to installing Anaconda is that you don't need admin rights to 
 
 After getting Anaconda installed, the user will have already access to some essential Python packages and will be able to install a functioning goSPL environment by following the directives below.
 
-Building goSPL-examples environment
-------------------------------------
+### Building goSPL-examples environment
 
 The next step consists in downloading the conda environment for goSPL. A conda environment is like a virtualenv that allows you to install a specific flavor of Python and set of libraries. For the latest version (`master` branch) of goSPL, this is done by downloading the ``environment.yml`` `file <https://raw.githubusercontent.com/Geodels/goSPL-examples/master/environment.yml>`_. To do this you can use the ``curl``:
 
