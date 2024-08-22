@@ -1,0 +1,53 @@
+name: Test stratigraphy mesh stripy
+
+domain:
+    npdata: ['inputs/gospl_mesh_stripy','v','c','z']
+    bc: '0000'
+    flowdir: 5
+
+time:
+    start: 0.
+    end: 2.5e5
+    tout: 1.e4
+    dt: 5.e3
+    strat: 5.e3
+
+spl:
+    K: 4.e-5
+    d: 0.42
+    m: 0.45
+
+diffusion:
+    hillslopeKa: 0.1
+    hillslopeKm: 0.8
+    nonlinKm: 1000.
+    clinSlp: 5.e-4
+
+flexure: 
+    method: 'FD'
+    regdx: 1000.
+    ninterp: 4
+    thick: 30.e3
+    rhoc: 2300.0
+    rhoa: 3300.0
+    young: 65e9
+    nu: 0.25
+    bcN: "Mirror"
+    bcE: "0Slope0Shear"
+    bcS: "Mirror"
+    bcW: "0Slope0Shear"
+
+sea:
+    position: -30.
+    curve: 'inputs/sealevel.csv'
+
+climate:
+  - start: 0.
+    uniform: 1
+
+compaction:
+    phis: 0.49
+    z0s: 3700.0
+
+output:
+    dir: 'strati_sim2'
