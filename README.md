@@ -64,9 +64,6 @@ Another advantage to installing Anaconda is that you don't need admin rights to 
 
 After getting Anaconda installed, the user will have already access to some essential Python packages and will be able to install a functioning goSPL environment by following the directives below.
 
-
-### Anaconda install 
-
 Building goSPL-examples environment
 ------------------------------------
 
