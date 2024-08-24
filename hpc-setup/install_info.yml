@@ -46,7 +46,7 @@ python3 -m pip install --no-deps .
 
 ################################################################
 #   Using the provided tests, you can check that it worked.    #
-#   this is a quick test here proper test will be done with.   #
+#   this is a quick test here. Proper ones will be done with   #
 #   the PBS script below.                                      #
 ################################################################
 
