@@ -3,8 +3,13 @@
 # Login
 # ssh USERXXX@gadi.nci.org.au
 
-# Copy local data to project
-# scp -r Desktop/Archive.zip USERXXX@gadi-dm.nci.org.au:/g/data/q97/USERXXX
+# Get the archived codes and testing examples for HPC
+# wget https://raw.githubusercontent.com/Geodels/goSPL-examples/main/hpc-setup/gospl_NCI.tar
+
+# Copy local data to project or home or scratch (q97 is the project name)
+# scp -r data.zip USERXXX@gadi-dm.nci.org.au:/g/data/q97/USERXXX
+# scp -r data.zip USERXXX@gadi-dm.nci.org.au:/home/XXX/USERXXX
+# scp -r data.zip USERXXX@gadi-dm.nci.org.au:/scratch/q97/USERXXX
 
 ################################################################
 #       Installing the virtual environment on Gadi NCI.        #
