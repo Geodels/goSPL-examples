@@ -46,4 +46,4 @@ dependencies:
   - triangle
   - pip:
     - git+https://github.com/Geodels/isoFlex.git
-    - git+https://github.com/Geodels/gospl.git@2024.09.01
+    - git+https://github.com/Geodels/gospl.git
