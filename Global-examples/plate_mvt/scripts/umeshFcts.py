@@ -375,39 +375,46 @@ def inter2UGRID(ncgrid, ugrid, nfolder, varname, type='face', latlon=True):
 
     return
 
-
 def performInterp(coords, ncoords, data, mthd='IDW'):
 
-    mesh = pyinterp.RTree()
-    mesh.packing(ncoords, data)
+    # RTree() → RTree3D()
+    mesh = pyinterp.RTree3D()
+    mesh.packing(ncoords, np.asarray(data.values, dtype=np.float64))
+    # mesh.packing(ncoords, data)
 
     if mthd == 'IDW':
-        val, neighbors = mesh.inverse_distance_weighting(
+        val, neighbors = pyinterp.inverse_distance_weighting(
+            mesh,
             coords,
-            within=False,  # Extrapolation is forbidden
-            k=11,  # We are looking for at most 11 neighbors
-            num_threads=0)
-    elif mthd == 'RBF':
-        val, neighbors = mesh.radial_basis_function(
-            coords,
-            within=False,  # Extrapolation is forbidden
-            k=11,  # We are looking for at most 11 neighbors
-            rbf='linear',
-            smooth=1e-4,
-            num_threads=0)
-    elif mthd == 'KRG':
-        val, neighbors = mesh.universal_kriging(
-            coords,
-            within=False,  # Extrapolation is forbidden
+            boundary_check="none",   # was: within=False
             k=11,
-            covariance='matern_12',
-            alpha=100_000,
-            num_threads=0)
+            num_threads=0,
+        )
+    elif mthd == 'RBF':
+        val, neighbors = pyinterp.radial_basis_function(
+            mesh,
+            coords,
+            boundary_check="none",   # was: within=False
+            k=11,
+            rbf="multiquadric",      # was: rbf='linear' — 'linear' renamed
+            smooth=1e-4,
+            num_threads=0,
+        )
+    elif mthd == 'KRG':
+        val, neighbors = pyinterp.kriging(
+            mesh,
+            coords,
+            boundary_check="none",   # was: within=False
+            k=11,
+            covariance_model="matern_12",   # was: covariance='matern_12'
+            drift_function="linear",        # was: universal_kriging + alpha=100_000
+            num_threads=0,
+        )
     else:
         print('Specified method is not supported')
+        return None
 
-    return val
-
+    return val, neighbors
 
 def mvNodes(x, y, z, vx, vy, vz, dt):
 
@@ -423,13 +430,15 @@ def mvNodes(x, y, z, vx, vy, vz, dt):
 
 def get_Tectonic(ufile, data_file, vkeys, zkeys, dkey, dt, mthd='IDW'):
 
+    earthRadius = constants['SHR_CONST_REARTH']
+
     # Open the UGRID file
     dual_mesh = uxr.open_dataset(ufile, *data_file, use_dual=True)
     coords = np.vstack((dual_mesh.uxgrid.node_lon, dual_mesh.uxgrid.node_lat)).T
 
     # Move nodes according to displacement
-    ncoords = mvNodes(dual_mesh.uxgrid.node_x, dual_mesh.uxgrid.node_y,
-                      dual_mesh.uxgrid.node_z, dual_mesh[vkeys[0]],
+    ncoords = mvNodes(dual_mesh.uxgrid.node_x*earthRadius, dual_mesh.uxgrid.node_y*earthRadius,
+                      dual_mesh.uxgrid.node_z*earthRadius, dual_mesh[vkeys[0]],
                       dual_mesh[vkeys[1]], dual_mesh[vkeys[2]],
                       dt)
 
@@ -438,71 +447,23 @@ def get_Tectonic(ufile, data_file, vkeys, zkeys, dkey, dt, mthd='IDW'):
         data = dual_mesh[zkeys[0]] + dual_mesh[dkey] * dt
     else:
         data = dual_mesh[zkeys[0]]
-    zval = performInterp(coords, ncoords, data, mthd)
+    zval, ngh = performInterp(coords, ncoords, data, mthd)
     dispTec = dual_mesh[zkeys[1]] - zval
 
     # Move backward nodes according to displacement
-    ncoords = mvNodes(dual_mesh.uxgrid.node_x, dual_mesh.uxgrid.node_y,
-                      dual_mesh.uxgrid.node_z, dual_mesh[vkeys[0]],
+    ncoords = mvNodes(dual_mesh.uxgrid.node_x*earthRadius, dual_mesh.uxgrid.node_y*earthRadius,
+                      dual_mesh.uxgrid.node_z*earthRadius, dual_mesh[vkeys[0]],
                       dual_mesh[vkeys[1]], dual_mesh[vkeys[2]],
                       -dt)
 
     # Interpolate data
-    tval = performInterp(coords, ncoords, dispTec, mthd)
+    tval, ngh = performInterp(coords, ncoords, dispTec, mthd)
     if dkey is not None:
        dual_mesh['tec'] = ('n_node', tval/dt + dual_mesh[dkey])
     else:
        dual_mesh['tec'] = ('n_node', tval/dt)
 
     return dual_mesh
-
-# def inter2UGRID(ncgrid, ugrid, nfolder, type='face',
-#                 coarse=False, latlon=True):
-#     # Interpolate from regular grid to ugrid
-
-#     keys_list = list(ncgrid.keys())
-
-#     if type == 'face':
-#         if latlon:
-#             meshLon = ugrid.face_lon.values
-#             meshLat = ugrid.face_lat.values
-#         else:
-#             meshLon = ugrid.face_x.values
-#             meshLat = ugrid.face_y.values
-#     elif type == 'node':
-#         if latlon:
-#             meshLon = ugrid.node_lon.values
-#             meshLat = ugrid.node_lat.values
-#         else:
-#             meshLon = ugrid.node_x.values
-#             meshLat = ugrid.node_y.values
-#     else:
-#         print('Function only allows 2 types either face or node')
-#         return
-
-#     if latlon:
-#         dlon = ncgrid.lon.values
-#         dlat = ncgrid.lat.values
-#     else:
-#         dlon = ncgrid.x.values
-#         dlat = ncgrid.y.values
-
-#     for k in range(len(keys_list)):
-#         vData = interp_bilin(dlon, dlat, ncgrid[keys_list[k]].values,
-#                              meshLon, meshLat)
-#         udata = uxr.UxDataArray(
-#             name=keys_list[k],
-#             data=vData,
-#             dims=["n_node"],
-#             uxgrid=ugrid
-#         )
-#         if coarse:
-#             udata.to_netcdf(nfolder+'/c'+keys_list[k]+'_'+type+'.nc')
-#         else:
-#             udata.to_netcdf(nfolder+'/'+keys_list[k]+'_'+type+'.nc')
-
-#     return
-
 
 def generateVTKmesh(points, cells):
     """
@@ -653,10 +614,10 @@ def getGridCoast(ncgrid, dual_mesh, dcoast, input_path):
         regridder_loc = xe.Regridder(
             ds_locs, ncgrid, "nearest_s2d", locstream_in=True
         )
-        regridder_loc.to_netcdf(input_path+'weights_distcoast.nc')
+        regridder_loc.to_netcdf(input_path+'/weights_distcoast.nc')
     else:
         regridder_loc = xe.Regridder(ds_locs, ncgrid, "nearest_s2d", 
-                                     filename=input_path+"weights_distcoast.nc", reuse_weights=True)
+                                     filename=input_path+'/weights_distcoast.nc', reuse_weights=True)
 
     return regridder_loc(ds_locs)
 

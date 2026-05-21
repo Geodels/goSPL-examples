@@ -114,7 +114,6 @@ def xyz2lonlat(X, Y, Z):
 
     return lonlat
 
-
 def planarMesh(nds, outfolder, fvtk=None, fumpas=True, voro=True):
 
     opts = jigsawpy.jigsaw_jig_t()
@@ -329,26 +328,29 @@ def inter2UGRID(ncgrid, ugrid, nfolder, varname, type='face', latlon=True):
 
     if not os.path.exists(nfolder):
         os.makedirs(nfolder)
-
-    # Interpolate from regular grid to ugrid
+    
+    # Pick mesh target coordinates
     if type == 'face':
         if latlon:
-            meshLon = ugrid.face_lon.values
-            meshLat = ugrid.face_lat.values
+            meshLon = ugrid['lonCell'].values
+            meshLat = ugrid['latCell'].values
+            dim_name = 'nCells'
         else:
-            meshLon = ugrid.face_x.values
-            meshLat = ugrid.face_y.values
+            meshLon = ugrid['xCell'].values
+            meshLat = ugrid['yCell'].values
+            dim_name = 'nCells'
     elif type == 'node':
         if latlon:
-            meshLon = ugrid.node_lon.values
-            meshLat = ugrid.node_lat.values
+            meshLon = ugrid['lonVertex'].values
+            meshLat = ugrid['latVertex'].values
+            dim_name = 'nVertices'
         else:
-            meshLon = ugrid.node_x.values
-            meshLat = ugrid.node_y.values
+            meshLon = ugrid['xVertex'].values
+            meshLat = ugrid['yVertex'].values
+            dim_name = 'nVertices'
     else:
-        print('Function only allows 2 types either face or node')
+        print('Function only allows 2 types: face or node')
         return
-
     if latlon:
         dlon = ncgrid.lon.values
         dlat = ncgrid.lat.values
@@ -356,22 +358,13 @@ def inter2UGRID(ncgrid, ugrid, nfolder, varname, type='face', latlon=True):
         dlon = ncgrid.x.values
         dlat = ncgrid.y.values
 
-    keys_list = list(ncgrid.keys())
-    for k in range(len(keys_list)):
-        vData = interp_bilin(dlon, dlat, ncgrid[keys_list[k]].values,
-                             meshLon, meshLat)
-        udata = uxr.UxDataArray(
-            name=keys_list[k],
-            data=vData,
-            dims=["n_node"],
-            uxgrid=ugrid
-        )
-        if k == 0:
-            ugridvar = udata.to_dataset()
-        else:
-            ugridvar[keys_list[k]] = udata
-
-    ugridvar.to_netcdf(nfolder+'/'+varname+'.nc')
+    # Interpolate each variable and collect into a plain xarray Dataset
+    data_vars = {}
+    for key in ncgrid.data_vars:
+        vData = interp_bilin(dlon, dlat, ncgrid[key].values, meshLon, meshLat)
+        data_vars[key] = xr.DataArray(vData, dims=[dim_name], name=key)
+    out_ds = xr.Dataset(data_vars)
+    out_ds.to_netcdf(os.path.join(nfolder, varname + '.nc'))
 
     return
 
@@ -455,54 +448,6 @@ def get_Tectonic(ufile, data_file, vkeys, zkeys, dkey, dt, mthd='IDW'):
        dual_mesh['tec'] = ('n_node', tval/dt)
 
     return dual_mesh
-
-# def inter2UGRID(ncgrid, ugrid, nfolder, type='face',
-#                 coarse=False, latlon=True):
-#     # Interpolate from regular grid to ugrid
-
-#     keys_list = list(ncgrid.keys())
-
-#     if type == 'face':
-#         if latlon:
-#             meshLon = ugrid.face_lon.values
-#             meshLat = ugrid.face_lat.values
-#         else:
-#             meshLon = ugrid.face_x.values
-#             meshLat = ugrid.face_y.values
-#     elif type == 'node':
-#         if latlon:
-#             meshLon = ugrid.node_lon.values
-#             meshLat = ugrid.node_lat.values
-#         else:
-#             meshLon = ugrid.node_x.values
-#             meshLat = ugrid.node_y.values
-#     else:
-#         print('Function only allows 2 types either face or node')
-#         return
-
-#     if latlon:
-#         dlon = ncgrid.lon.values
-#         dlat = ncgrid.lat.values
-#     else:
-#         dlon = ncgrid.x.values
-#         dlat = ncgrid.y.values
-
-#     for k in range(len(keys_list)):
-#         vData = interp_bilin(dlon, dlat, ncgrid[keys_list[k]].values,
-#                              meshLon, meshLat)
-#         udata = uxr.UxDataArray(
-#             name=keys_list[k],
-#             data=vData,
-#             dims=["n_node"],
-#             uxgrid=ugrid
-#         )
-#         if coarse:
-#             udata.to_netcdf(nfolder+'/c'+keys_list[k]+'_'+type+'.nc')
-#         else:
-#             udata.to_netcdf(nfolder+'/'+keys_list[k]+'_'+type+'.nc')
-
-#     return
-
 
 def generateVTKmesh(points, cells):
     """

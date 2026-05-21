@@ -19,6 +19,7 @@ diffusion:
     hillslopeKa: 0.5
     hillslopeKm: 2.0
     nonlinKm: 1.e4
+    Gmar: 0.5
     clinSlp: 1.e-5
 
 flexure: 
@@ -28,6 +29,7 @@ flexure:
     rhoa: 3300.0
     young: 65e9
     nu: 0.25
+    res_deg: 0.25
 
 temap:
   - start: 251.e6
@@ -41,4 +43,4 @@ climate:
     map: ['vars_40/forcing251','r']
 
 output:
-    dir: 'silico_mardep'
+    dir: 'silico_mardep2'
