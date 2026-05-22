@@ -1,0 +1,61 @@
+name: Test glacial erosion
+
+domain:
+    npdata: ['data/gospl_mesh','v','c','z']
+    flowdir: 8
+    bc: '0000'
+    seadepo: True
+
+time:
+    start: 0.
+    end: 5.e5
+    tout: 1.e4
+    dt: 5.e3
+
+spl:
+    K: 2.0e-6
+    d: 0.42
+    m: 0.5
+    n: 1.
+
+ice:
+    icedir: 1
+    fmelt: 10.
+    diff: 20.
+    hterm: 1500.0
+    hela: 1600.0
+    hice: 1900.0
+    fwidth: 1.5
+    eheight: 0.25
+    evol: 'data/ice_evol.csv'
+    Ki: 8.e-6
+
+diffusion:
+    hillslopeKa: 0.3
+    hillslopeKm: 0.3
+    nonlinKm: 100.
+    clinSlp: 5.e-4
+
+# flexure: 
+#     method: 'FD'
+#     regdx: 1000.
+#     ninterp: 4
+#     thick: 10.e3
+#     rhoc: 2700.0
+#     rhoa: 3300.0
+#     young: 65e9
+#     nu: 0.25
+#     bcN: "0Displacement0Slope"
+#     bcE: "0Displacement0Slope"
+#     bcS: "0Displacement0Slope"
+#     bcW: "0Displacement0Slope"
+
+sea:
+    position: -100.
+
+climate:
+  - start: 0.
+    uniform: 1
+
+output:
+    dir: 'sim_glacier'

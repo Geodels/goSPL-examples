@@ -1,0 +1,78 @@
+name: Test river erosion
+
+domain:
+    npdata: ['data/gospl_mesh','v','c','z']
+    flowdir: 5
+    bc: '0000'
+    # seadepo: False
+
+time:
+    start: 0.
+    end: 1.e5
+    tout: 1.e4
+    dt: 5.e3
+
+spl:
+    K: 4.e-6
+    d: 0.
+    m: 0.5
+    G: 1.
+
+soil:
+    soilK: 6.e-6
+    maxProd: 50.e-6
+    depthProd: 1.0
+    roughnessL: 1.0
+    decayDepth: 0.7
+    bedrockConv: 1.e-8
+    uniform: 0.5
+
+diffusion:
+    hillslopeKa: 1.0
+    hillslopeKm: 2.0
+    hillslopenl: 2.5
+#     hillslopeSc: 0.8
+#     hillslopeNb: 4
+    # Marine fluvial deposition
+    nonlinKm: 120
+    clinSlp: 5.e-4
+
+flexure: 
+    method: 'FD'
+    regdx: 1000.
+    ninterp: 4
+    thick: 5.e3
+    rhoc: 2300.0
+    rhoa: 3300.0
+    young: 65e9
+    nu: 0.25
+    bcN: "Mirror"
+    bcE: "Mirror"
+    bcS: "Mirror"
+    bcW: "Mirror"
+
+sea:
+    position: 0.
+
+climate:
+  - start: 0.
+    uniform: 1
+
+# orography:
+#     regdx: 1000.
+#     latitude: 40.0 # Average latitude used to compute the Coriolis factors [degrees btw -90 and 90]
+#     wind_speed: 30.0 # wind speed m/s
+#     wind_dir: 270 # wind direction [0: north, 270: west]
+#     nm: 0.001 # moist stability frequency [1/s]
+#     env_lapse_rate: -0.25 # environmental lapse rate [degrees Celsius/km]
+#     moist_lapse_rate: -0.5 # moist adiabatic lapse rate [degrees Celsius/km]
+#     ref_density: 7.4e-3 # reference saturation water vapor density [kg/m^3]
+#     hw:  1000 # water vapor scale height [m]
+#     conv_time: 1000. # cloud water to hydrometeor conversion time [s]
+#     fall_time: 1000. # hydrometeor fallout time [s]
+#     precip_base: 1. # non-orographic, uniform precipitation rate [mm/h]
+#     precip_min: 0.5 # minimum precipitation [mm/h] when precipitation rate <= 0
+#     rainfall_frequency: 1 # number of storm of 1 hour duration per day
+
+output:
+    dir: 'sim_river_soil'
