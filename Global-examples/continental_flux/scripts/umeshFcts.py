@@ -55,6 +55,7 @@ def buildGlobalMeshSimple(widthCell, foldername):
         build_spherical_mesh(cellWidth, lon, lat,
                              earth_radius=earthRadius,
                              out_filename=ufile,
+                             dir=foldername,
                              plot_cellWidth=False)
 
     return
@@ -92,6 +93,7 @@ def refineGlobalMesh(widthCell, lon, lat, foldername):
         build_spherical_mesh(widthCell, lon, lat,
                              earth_radius=earthRadius,
                              out_filename=ufile,
+                             dir=foldername,
                              plot_cellWidth=False)
 
     return

@@ -1,3 +1,7 @@
+import sys
+from petsc4py import PETSc
+PETSc.Options().setValue("-options_left", "0")
+
 import argparse
 from gospl.model import Model as sim
 
@@ -5,8 +9,7 @@ from gospl.model import Model as sim
 parser = argparse.ArgumentParser(
     description="This is a simple entry to run goSPL model.", add_help=True
 )
-parser.add_argument("-i", "--input", help="Input file name (YAML file)",
-                    required=True)
+parser.add_argument("-i", "--input", help="Input file name (YAML file)", required=True)
 parser.add_argument(
     "-v",
     "--verbose",
