@@ -30,7 +30,6 @@ dependencies:
   - uxarray
   - pyinterp
   - jigsawpy
-  - stripy
   - xesmf
   - mpas_tools
   - pygmt
@@ -42,8 +41,8 @@ dependencies:
   - numba
   - shapely
   - pyvista
+  - pyshtools
   - pyproj 
   - triangle
   - pip:
-    - git+https://github.com/Geodels/isoFlex.git
     - git+https://github.com/Geodels/gospl.git

@@ -1,3 +1,7 @@
+import sys
+from petsc4py import PETSc
+PETSc.Options().setValue("-options_left", "0")
+
 import argparse
 from gospl.model import Model as sim
 
