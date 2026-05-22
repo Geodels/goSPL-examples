@@ -19,6 +19,8 @@ spl:
 diffusion:
     hillslopeKa: 0.5
     hillslopeKm: 2.0
+    nlPitK: 500.0
+    pitInletBias: 0.8 
 
 sea:
     position: 0.
