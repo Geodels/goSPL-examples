@@ -20,7 +20,7 @@ spl:
 
 ice:
     icedir: 1
-    fmelt: 10.
+    melt: 10.
     diff: 20.
     hterm: 1500.0
     hela: 1600.0
