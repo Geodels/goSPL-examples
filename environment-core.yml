@@ -1,0 +1,20 @@
+name: gospl-smoke
+channels:
+  - geodels
+  - conda-forge
+dependencies:
+  - python=3.11
+  - gospl
+  - jupyterlab
+  - notebook
+  - ipykernel
+  - matplotlib
+  - meshio
+  - pre-commit
+  - seaborn
+  - pyevtk
+  - pyvista
+  - pyshtools
+  - pip
+  - pip:
+    - basemap
