@@ -10,6 +10,13 @@ Series of examples to illustrate the functionalities of goSPL.
 
 [![DOI](https://joss.theoj.org/papers/10.21105/joss.02804/status.svg)](https://doi.org/10.21105/joss.02804)
 
+## Installation via Conda
+
+```bash
+  mamba env create -f environment.yml
+  conda activate gospl-smoke
+```
+
 ## Installation via Docker
 
 The goSPL image contains all the dependencies and configuration files required to run the examples.
