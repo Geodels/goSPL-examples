@@ -96,6 +96,16 @@ def refineGlobalMesh(widthCell, lon, lat, foldername):
 
     return
 
+def lonlat_to_xyz(lon, lat):
+    
+    lon = np.radians(lon)
+    lat = np.radians(lat)
+
+    x = np.cos(lat) * np.cos(lon)
+    y = np.cos(lat) * np.sin(lon)
+    z = np.sin(lat)
+
+    return np.column_stack([x, y, z])
 
 def xyz2lonlat(X, Y, Z):
 
@@ -334,6 +344,9 @@ def inter2UGRID(ncgrid, ugrid, nfolder, varname, type='face', latlon=True):
         if latlon:
             meshLon = ugrid['lonCell'].values
             meshLat = ugrid['latCell'].values
+            meshLon = np.degrees(meshLon)
+            meshLon = (meshLon + 180.0) % 360.0 - 180.0
+            meshLat = np.degrees(meshLat)
             dim_name = 'nCells'
         else:
             meshLon = ugrid['xCell'].values
@@ -343,6 +356,9 @@ def inter2UGRID(ncgrid, ugrid, nfolder, varname, type='face', latlon=True):
         if latlon:
             meshLon = ugrid['lonVertex'].values
             meshLat = ugrid['latVertex'].values
+            meshLon = np.degrees(meshLon)
+            meshLon = (meshLon + 180.0) % 360.0 - 180.0
+            meshLat = np.degrees(meshLat)
             dim_name = 'nVertices'
         else:
             meshLon = ugrid['xVertex'].values
@@ -369,33 +385,41 @@ def inter2UGRID(ncgrid, ugrid, nfolder, varname, type='face', latlon=True):
     return
 
 
-def performInterp(coords, ncoords, data, mthd='IDW'):
+def performInterp(coords_3d, ncoords_3d, data, mthd='IDW'):
 
-    mesh = pyinterp.RTree()
-    mesh.packing(ncoords, data)
+    # coords_3d = lonlat_to_xyz(coords[:,0],coords[:,1])
+    # ncoords_3d = lonlat_to_xyz(ncoords[:,0],ncoords[:,1])
+    tree = pyinterp.core.RTree3D()
+    tree.packing(ncoords_3d, data)
 
     if mthd == 'IDW':
-        val, neighbors = mesh.inverse_distance_weighting(
-            coords,
-            within=False,  # Extrapolation is forbidden
-            k=11,  # We are looking for at most 11 neighbors
-            num_threads=0)
+        val, neighbors = pyinterp.inverse_distance_weighting(
+            tree,
+            coords_3d,
+            k=11,
+            num_threads=0
+        )
+
     elif mthd == 'RBF':
-        val, neighbors = mesh.radial_basis_function(
-            coords,
-            within=False,  # Extrapolation is forbidden
-            k=11,  # We are looking for at most 11 neighbors
+        val, neighbors = pyinterp.radial_basis_function(
+            tree,
+            coords_3d,
+            k=11,
             rbf='linear',
             smooth=1e-4,
-            num_threads=0)
+            num_threads=0
+        )
+
     elif mthd == 'KRG':
-        val, neighbors = mesh.universal_kriging(
-            coords,
-            within=False,  # Extrapolation is forbidden
+        val, neighbors = pyinterp.universal_kriging(
+            tree,
+            coords_3d,
             k=11,
             covariance='matern_12',
             alpha=100_000,
-            num_threads=0)
+            num_threads=0
+        )
+
     else:
         print('Specified method is not supported')
 
@@ -409,45 +433,49 @@ def mvNodes(x, y, z, vx, vy, vz, dt):
     nz = z + vz * dt
 
     # Convert spherical coordinates to lon/lat coordinates
-    mvlonlat = xyz2lonlat(nx, ny, nz)
+    # mvlonlat = xyz2lonlat(nx, ny, nz)
 
-    return np.vstack((mvlonlat[:, 0], mvlonlat[:, 1])).T
+    return np.vstack((nx, ny, nz)).T
 
 
 def get_Tectonic(ufile, data_file, vkeys, zkeys, dkey, dt, mthd='IDW'):
 
     # Open the UGRID file
-    dual_mesh = uxr.open_dataset(ufile, *data_file, use_dual=True)
-    coords = np.vstack((dual_mesh.uxgrid.node_lon, dual_mesh.uxgrid.node_lat)).T
+    mapds = xr.open_dataset(ufile) 
+    datads = xr.open_dataset(data_file) 
+    # Extract nodes and faces information
+    n_nodes = mapds.dims['nCells']
+    coords = np.zeros((n_nodes, 3))
+    coords[:, 0] = mapds['xCell'].values
+    coords[:, 1] = mapds['yCell'].values
+    coords[:, 2] = mapds['zCell'].values
 
     # Move nodes according to displacement
-    ncoords = mvNodes(dual_mesh.uxgrid.node_x, dual_mesh.uxgrid.node_y,
-                      dual_mesh.uxgrid.node_z, dual_mesh[vkeys[0]],
-                      dual_mesh[vkeys[1]], dual_mesh[vkeys[2]],
+    ncoords = mvNodes(coords[:,0], coords[:,1], coords[:,2],
+                      datads[vkeys[0]], datads[vkeys[1]], datads[vkeys[2]],
                       dt)
 
     # Interpolate data
     if dkey is not None:
-        data = dual_mesh[zkeys[0]] + dual_mesh[dkey] * dt
+        data = datads[zkeys[0]] + datads[dkey] * dt
     else:
-        data = dual_mesh[zkeys[0]]
-    zval = performInterp(coords, ncoords, data, mthd)
-    dispTec = dual_mesh[zkeys[1]] - zval
+        data = datads[zkeys[0]]
+    zval = performInterp(coords, ncoords, data.values, mthd)
+    dispTec = datads[zkeys[1]].values - zval
 
     # Move backward nodes according to displacement
-    ncoords = mvNodes(dual_mesh.uxgrid.node_x, dual_mesh.uxgrid.node_y,
-                      dual_mesh.uxgrid.node_z, dual_mesh[vkeys[0]],
-                      dual_mesh[vkeys[1]], dual_mesh[vkeys[2]],
+    ncoords = mvNodes(coords[:,0], coords[:,1], coords[:,2],
+                      datads[vkeys[0]],datads[vkeys[1]], datads[vkeys[2]],
                       -dt)
 
     # Interpolate data
     tval = performInterp(coords, ncoords, dispTec, mthd)
     if dkey is not None:
-       dual_mesh['tec'] = ('n_node', tval/dt + dual_mesh[dkey])
+       datads['tec'] = ('n_node', tval/dt + datads[dkey])
     else:
-       dual_mesh['tec'] = ('n_node', tval/dt)
+       datads['tec'] = ('n_node', tval/dt)
 
-    return dual_mesh
+    return datads
 
 def generateVTKmesh(points, cells):
     """
@@ -580,15 +608,21 @@ def distanceCoasts(vtkMesh, points, data, sl, k_neighbors=1):
     return coastDist
 
 
-def getGridCoast(ncgrid, dual_mesh, dcoast, input_path):
+def getGridCoast(ncgrid, mapds, dcoast, input_path):
 
     ds_locs = xr.Dataset()
 
+    meshLon = mapds['lonCell'].values
+    meshLat = mapds['latCell'].values
+    meshLon = np.degrees(meshLon)
+    meshLon = (meshLon + 180.0) % 360.0 - 180.0
+    meshLat = np.degrees(meshLat)
+    
     ds_locs["lon"] = xr.DataArray(
-        data=dual_mesh.uxgrid.node_lon.values, dims=("locations")
+        data=meshLon, dims=("locations")
     )
     ds_locs["lat"] = xr.DataArray(
-        data=dual_mesh.uxgrid.node_lat.values, dims=("locations")
+        data=meshLat, dims=("locations")
     )
     ds_locs["coast"] = xr.DataArray(
         data=dcoast, dims=("locations")
@@ -598,10 +632,10 @@ def getGridCoast(ncgrid, dual_mesh, dcoast, input_path):
         regridder_loc = xe.Regridder(
             ds_locs, ncgrid, "nearest_s2d", locstream_in=True
         )
-        regridder_loc.to_netcdf(input_path+'weights_distcoast.nc')
+        regridder_loc.to_netcdf(input_path+'/weights_distcoast.nc')
     else:
         regridder_loc = xe.Regridder(ds_locs, ncgrid, "nearest_s2d", 
-                                     filename=input_path+"weights_distcoast.nc", reuse_weights=True)
+                                     filename=input_path+"/weights_distcoast.nc", reuse_weights=True)
 
     return regridder_loc(ds_locs)
 

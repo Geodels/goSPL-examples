@@ -112,3 +112,132 @@ After your environment has been activated, you can either use VS-code or jupyter
 ## Running goSPL-examples 
 
 The series of examples provided here are related to the ``2024.09.01`` goSPL branch and consist in simple local and global models that illustrate the main capabilities of the code. You might want to start with the local example called `stratigraphic_record` and the global example called `continental_flux`.
+
+
+## 🔧 Configure MPI environment variables inside the `gospl-smoke` Conda environment (if necessary)
+
+This is a workaround to prevent OFI polling crashes during `MPI_Finalize()`.
+```bash
+MPIDI_OFI_handle_cq_error:
+OFI poll failed (default nic=utun4: Input/output error)
+```
+comes from libfabric (OFI) + MPICH automatically selecting the wrong network interface on macOS...
+
+### 1. Activate the environment
+
+```bash
+conda activate gospl-smoke
+```
+
+This ensures all changes are applied specifically to the `gospl-smoke` environment.
+
+---
+
+### 2. Create activation hook directory
+
+```bash
+mkdir -p $CONDA_PREFIX/etc/conda/activate.d
+```
+
+This directory stores scripts that run automatically whenever the environment is activated.
+
+---
+
+### 3. Define MPI/libfabric environment variables
+
+Create the activation script:
+
+```bash
+nano $CONDA_PREFIX/etc/conda/activate.d/mpi.sh
+```
+
+Add the following lines:
+
+```bash
+export FI_PROVIDER=tcp
+export FI_TCP_IFACE=en0
+export MPICH_CH4_OFI_ENABLE=0
+```
+
+### 💡 What this does:
+
+* `FI_PROVIDER=tcp` → forces libfabric to use TCP instead of OFI auto-selection
+* `FI_TCP_IFACE=en0` → forces use of the physical network interface (avoids `utun*`)
+* `MPICH_CH4_OFI_ENABLE=0` → disables OFI layer in MPICH CH4
+
+---
+
+### 4. Create deactivation cleanup script (optional but recommended)
+
+```bash
+mkdir -p $CONDA_PREFIX/etc/conda/deactivate.d
+nano $CONDA_PREFIX/etc/conda/deactivate.d/mpi.sh
+```
+
+Add:
+
+```bash
+unset FI_PROVIDER
+unset FI_TCP_IFACE
+unset MPICH_CH4_OFI_ENABLE
+```
+
+### 💡 What this does:
+
+* Cleans up environment variables when leaving the environment
+* Prevents leakage into other conda environments or shell sessions
+
+---
+
+### 5. Reload the environment
+
+```bash
+conda deactivate
+conda activate gospl-smoke
+```
+
+This ensures the activation script is executed.
+
+---
+
+### 6. Verify environment variables
+
+```bash
+echo $FI_PROVIDER
+echo $FI_TCP_IFACE
+```
+
+Expected output:
+
+```bash
+tcp
+en0
+```
+
+---
+
+### 7. Test MPI functionality
+
+```bash
+mpirun -n 4 python -c "from mpi4py import MPI; print(MPI.COMM_WORLD.rank)"
+```
+
+Expected output:
+
+```
+0
+1
+2
+3
+```
+
+---
+
+### ✅ Result
+
+At this point, your `gospl-smoke` environment should:
+
+* Avoid `utun*` interfaces
+* Use stable TCP-based MPI communication
+* Prevent OFI polling crashes during `MPI_Finalize()`
+* Work consistently for goSPL/PETSc workflows

@@ -55,6 +55,7 @@ class mapOutputs:
 
         self.getData(step)
 
+        self.datafA = None
         self.dataffA = None
         self.datafSed = None
         self.datafRain = None
@@ -566,9 +567,12 @@ class mapOutputs:
         ffai = np.sum(self.wghts * self.fillAcc[self.ids], axis=1) * self.denum
         raini = np.sum(self.wghts * self.rain[self.ids], axis=1) * self.denum
         erodepi = np.sum(self.wghts * self.erodep[self.ids], axis=1) * self.denum
+        erodepratei = np.sum(self.wghts * self.erodeprate[self.ids], axis=1) * self.denum
         sedLoadi = np.sum(self.wghts * self.sedLoad[self.ids], axis=1) * self.denum
         if self.lookuplift and self.uplift is not None:
             uplifti = np.sum(self.wghts * self.uplift[self.ids], axis=1) * self.denum
+        if self.flex and self.flexIso is not None:
+            flexi = np.sum(self.wghts * self.flexIso[self.ids], axis=1) * self.denum
         lbli = self.labels[self.ids[:, 0]]
 
         if len(self.oIDs) > 0:
@@ -577,19 +581,25 @@ class mapOutputs:
             fai[self.oIDs] = self.flowAcc[self.ids[self.oIDs, 0]]
             ffai[self.oIDs] = self.fillAcc[self.ids[self.oIDs, 0]]
             erodepi[self.oIDs] = self.erodep[self.ids[self.oIDs, 0]]
+            erodepratei[self.oIDs] = self.erodeprate[self.ids[self.oIDs, 0]]
             sedLoadi[self.oIDs] = self.sedLoad[self.ids[self.oIDs, 0]]
             if self.lookuplift and self.uplift is not None:
                 uplifti[self.oIDs] = self.uplift[self.ids[self.oIDs, 0]]
+            if self.flex and self.flexIso is not None:
+                flexi[self.oIDs] = self.flexIso[self.ids[self.oIDs, 0]]
 
         raini = np.reshape(raini, (self.ny, self.nx))
         z = np.reshape(zi, (self.ny, self.nx))
         th = np.reshape(erodepi, (self.ny, self.nx))
+        thrate = np.reshape(erodepratei, (self.ny, self.nx))
         sl = np.reshape(sedLoadi, (self.ny, self.nx))
         fa = np.reshape(fai, (self.ny, self.nx))
         ffa = np.reshape(ffai, (self.ny, self.nx))
         lbl = np.reshape(lbli, (self.ny, self.nx))
         if self.lookuplift and self.uplift is not None:
             vdisp = np.reshape(uplifti, (self.ny, self.nx))
+        if self.flex and self.flexIso is not None:
+            fliso = np.reshape(flexi, (self.ny, self.nx))
 
         if self.datafA is None:
             self.datafelev = np.zeros((self.ny, self.nx))
@@ -600,12 +610,16 @@ class mapOutputs:
             self.datafSed = np.zeros((self.ny, self.nx))
             if self.lookuplift:
                 self.datafUp = np.zeros((self.ny, self.nx))
+            if self.flex:
+                self.datafFlex = np.zeros((self.ny, self.nx))
             self.datafEroDep = np.zeros((self.ny, self.nx))
+            self.datafEDRate = np.zeros((self.ny, self.nx))
             self.datafBasin = np.zeros((self.ny, self.nx), dtype=int)
 
         self.datafelev[:, :] = z
         self.datafRain[:, :] = raini
         self.datafEroDep[:, :] = th
+        self.datafEDRate[:, :] = thrate
         self.datafSed[:, :] = sl
         self.datafA[:, :] = fa
         self.dataffA[:, :] = ffa
@@ -613,6 +627,9 @@ class mapOutputs:
 
         if self.lookuplift and self.uplift is not None:
             self.datafUp[:, :] = vdisp
+
+        if self.flex and self.flexIso is not None:
+            self.datafFlex[:, :] = fliso
 
         return
 
@@ -799,6 +816,10 @@ class mapOutputs:
             erodep.units = "metres"
             erodep[:, :] = self.datafEroDep
 
+            erodeprate = ds.createVariable("erodep_rate", "f8", ("latitude", "longitude"), zlib=True)
+            erodeprate.units = "m/yr"
+            erodeprate[:, :] = self.datafEDRate
+
             rain = ds.createVariable(
                 "precipitation", "f8", ("latitude", "longitude"), zlib=True
             )
@@ -830,6 +851,11 @@ class mapOutputs:
                 fu.units = "m/yr"
                 fu[:, :] = self.datafUp
 
+            if self.flex:
+                dflex = ds.createVariable("flex", "f4", ("latitude", "longitude"), zlib=True)
+                dflex.units = "m"
+                dflex[:, :] = self.datafFlex
+                
             fl = ds.createVariable(
                 "basinID", "i4", ("latitude", "longitude"), zlib=True
             )
