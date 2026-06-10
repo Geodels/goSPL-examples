@@ -1,3 +1,5 @@
+"""Sediment stratigraphy utilities for goSPL output processing and mesh interpolation."""
+
 import gc
 import sys
 import glob
@@ -12,6 +14,7 @@ from scipy.ndimage import gaussian_filter
 
 @nb.jit(nopython=True)
 def getVals(k, idlat1, idlat2, idlon1, idlon2, lon, lat, zz, zi, thu, th, phiSi, topz):
+    """Compute regular grid values for stratigraphic layers without fine or weathered fields."""
 
     shape = (idlon2 - idlon1, idlat2 - idlat1)
     lx = np.empty(shape)
@@ -58,6 +61,7 @@ def getVals2(
     phiWi,
     topz,
 ):
+    """Compute regular grid values for stratigraphic layers including fine and weathered fields."""
 
     shape = (idlon2 - idlon1, idlat2 - idlat1)
     lx = np.empty(shape)
@@ -93,7 +97,22 @@ def getVals2(
 
 
 class stratal:
+    """Class to read and interpolate sedimentary stratigraphic output from goSPL.
+
+    Parameters
+    ----------
+    path : str or None
+        Optional base path for the YAML input and output directories.
+    filename : str
+        Path to the YAML input file describing the domain and output structure.
+    layer : int or None
+        Specific sedimentary layer to read. If None, all available layers are loaded.
+    model : {'spherical', 'utm'}
+        Coordinate system of the output mesh.
+    """
+
     def __init__(self, path=None, filename=None, layer=None, model="spherical"):
+        """Initialize the stratal reader and parse the input configuration file."""
 
         self.path = path
         if path is not None:
@@ -134,6 +153,7 @@ class stratal:
         return
 
     def _inputParser(self):
+        """Parse the YAML configuration and set up output and stratigraphy file references."""
 
         try:
             timeDict = self.input["time"]
@@ -185,6 +205,7 @@ class stratal:
         return
 
     def _xyz2lonlat(self):
+        """Convert internal Cartesian coordinates to longitude and latitude."""
 
         r = np.sqrt(self.x ** 2 + self.y ** 2 + self.z ** 2)
 
@@ -204,6 +225,7 @@ class stratal:
         return
 
     def lonlat2xyz(self, lon, lat, radius=6378137.0):
+        """Convert longitude/latitude to Cartesian coordinates for spherical meshes."""
 
         rlon = np.radians(lon)
         rlat = np.radians(lat)
@@ -216,6 +238,7 @@ class stratal:
         return coords
 
     def _getCoordinates(self):
+        """Load mesh coordinates from topology HDF5 files and build a KD-tree."""
 
         for k in range(self.nbCPUs):
             df = h5py.File("%s/h5/topology.p%s.h5" % (self.outputDir, k), "r")
@@ -242,6 +265,7 @@ class stratal:
         return
 
     def getData(self, nbCPUs, outputDir, nbfile, strataFile):
+        """Read sedimentary layer data from HDF5 files and combine data across MPI ranks."""
 
         for k in range(nbCPUs):
             sf = h5py.File("%s/h5/stratal.%s.p%s.h5" % (outputDir, nbfile, k), "r")
@@ -274,6 +298,7 @@ class stratal:
         return elev, th, phiS, fine, phiF, weathered, phiW
 
     def readStratalData(self):
+        """Load stratigraphic data and set up layer arrays for subsequent interpolation."""
 
         self._getCoordinates()
 
@@ -293,6 +318,7 @@ class stratal:
         return
 
     def _test_progress(self, job_title, progress):
+        """Print a simple textual progress bar for long-running mesh operations."""
 
         length = 20
         block = int(round(length * progress))
@@ -305,6 +331,7 @@ class stratal:
         sys.stdout.flush()
 
     def buildLonLatMesh(self, res=0.1, nghb=3):
+        """Interpolate stratigraphic layers onto a regular longitude-latitude grid."""
 
         self.lon = np.arange(-180.0, 180.0 + res, res)
         self.nx = len(self.lon)
@@ -376,6 +403,7 @@ class stratal:
         return
 
     def buildUTMmesh(self, res=5000.0, nghb=3):
+        """Interpolate stratigraphic layers onto a regular UTM-style projected grid."""
 
         xo = self.x.min()
         xm = self.x.max()

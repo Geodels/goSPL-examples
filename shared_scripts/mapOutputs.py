@@ -1,3 +1,9 @@
+"""Utilities to read goSPL output and convert simulation fields to standard output formats.
+
+This module reads goSPL HDF5 output files, interpolates data onto regular grids,
+exports VTK and NetCDF diagnostics, and supports spherical or UTM coordinate systems.
+"""
+
 import os
 import glob
 import h5py
@@ -16,9 +22,28 @@ from gospl._fortran import definetin
 from gospl.mesher.meshfunc import VoroBuild
 
 class mapOutputs:
+    """Class for extracting and exporting model output data from goSPL runs.
+
+    Parameters
+    ----------
+    path : str or None
+        Optional base path prepended to input and output directories.
+    filename : str
+        Path to a YAML input file describing mesh and output configuration.
+    step : int or None
+        Simulation step index to read from output files.
+    uplift : bool
+        Whether to read uplift data from output HDF5 files.
+    flex : bool
+        Whether to read flexural isostasy data from output HDF5 files.
+    model : {'spherical', 'utm'}
+        Coordinate system used by the output data.
+    """
+
     def __init__(
         self, path=None, filename=None, step=None, uplift=True, flex=False, model="spherical"
     ):
+        """Initialize the mapOutputs object and load the requested model step."""
 
         # Check input file exists
         self.path = path
@@ -70,6 +95,7 @@ class mapOutputs:
         return
 
     def _inputParser(self):
+        """Parse the YAML input to configure mesh and output settings."""
 
         try:
             domainDict = self.input["domain"]
@@ -200,6 +226,22 @@ class mapOutputs:
         return
 
     def lonlat2xyz(self, lon, lat, radius=6378137.0):
+        """Convert longitude and latitude to Cartesian coordinates.
+
+        Parameters
+        ----------
+        lon : array_like
+            Longitudes in degrees.
+        lat : array_like
+            Latitudes in degrees.
+        radius : float
+            Sphere radius in meters.
+
+        Returns
+        -------
+        numpy.ndarray
+            3-element Cartesian coordinate vector.
+        """
 
         rlon = np.radians(lon)
         rlat = np.radians(lat)
@@ -212,6 +254,7 @@ class mapOutputs:
         return coords
 
     def _xyz2lonlat(self):
+        """Convert stored Cartesian mesh vertex positions to longitude/latitude."""
 
         r = np.sqrt(
             self.vertices[:, 0] ** 2
@@ -239,6 +282,7 @@ class mapOutputs:
         return
 
     def getData(self, step, sl=0.):
+        """Load and interpolate HDF5 output data for the requested simulation step."""
 
         if self.nbCPUs == 0:
             self.nbCPUs = 1
@@ -460,6 +504,7 @@ class mapOutputs:
         return
 
     def exportVTK(self, vtkfile):
+        """Export the current mesh and interpolated fields to a VTK file."""
 
         if self.lookuplift and self.flex:
             vis_mesh = meshio.Mesh(
@@ -534,6 +579,7 @@ class mapOutputs:
         return
 
     def buildLonLatMesh(self, res=0.1, nghb=3, box=None):
+        """Interpolate model output fields onto a regular global latitude-longitude mesh."""
 
         if self.res is not None:
             if self.res != res:
@@ -634,6 +680,7 @@ class mapOutputs:
         return
 
     def buildUTMmesh(self, res=5000.0, nghb=3, smth=0):
+        """Interpolate model output fields onto a regular UTM-style mesh grid."""
 
         xo = self.lonlat[:, 0].min()
         xm = self.lonlat[:, 0].max()
@@ -727,6 +774,7 @@ class mapOutputs:
             self.datafFlex[:, :] = fliso
 
     def exportNetCDF(self, ncfile):
+        """Write the interpolated data fields to a NetCDF output file."""
 
         try:
             os.remove(ncfile)

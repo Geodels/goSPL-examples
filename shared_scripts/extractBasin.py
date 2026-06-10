@@ -1,3 +1,5 @@
+"""Utilities for catchment extraction using DEM and flow accumulation."""
+
 import numpy as np
 import xarray as xr
 import pandas as pd
@@ -10,6 +12,28 @@ import rasterio
 warnings.filterwarnings("ignore", category=rasterio.errors.NotGeoreferencedWarning)
 
 def getCatchment(dataset,ptx,pty,fa_thres=50):
+    """Delineate a catchment from DEM data and a pour point.
+
+    Parameters
+    ----------
+    dataset : xarray.Dataset
+        Input dataset containing an elevation variable and coordinates.
+    ptx, pty : float
+        Pour point longitude and latitude coordinates in the same CRS as the DEM.
+    fa_thres : int, optional
+        Flow accumulation threshold used to extract the river network branches.
+
+    Returns
+    -------
+    grid : pysheds.Grid
+        Grid object containing the loaded DEM, flow directions, and catchment mask.
+    branches : dict
+        GeoJSON-like river network features extracted from the catchment.
+    dist : numpy.ndarray
+        Distance from each cell to the outlet along the drainage network.
+    branch_df : list of pandas.DataFrame
+        Per-branch data frames with x, y, dist, fa, and z values for each extracted branch.
+    """
 
     geotiffname = 'tmp.tif'
     elevArray = dataset.elevation.copy()
@@ -110,41 +134,5 @@ def getCatchment(dataset,ptx,pty,fa_thres=50):
         df = pd.DataFrame(data)
 
         branch_df.append(df)
-    #     branch = branches['features'][b]
-    #     branchXY = np.asarray(branch['geometry']['coordinates'])
-    #     branchXY = np.flip(branchXY,1)
-    #     dist2, id = tree.query(branchXY, k=1)
-    #     elev = inflated_dem.flatten()[id]
-    #     fa = acc.flatten()[id]
-
-    #     data = np.vstack((branchXY[:,0], branchXY[:,1], 
-    #                         elev, fa))
-    #     df = pd.DataFrame(data.T,
-    #                         columns = ['x','y','elev','fa'])
-    #     df = df[df.fa > -9999]
-    #     df = df.reset_index(drop=True)
-
-    #     xx = df.x.to_numpy()
-    #     yy = df.y.to_numpy()
-    #     dx = xx[1:]-xx[:-1]
-    #     dy = yy[1:]-yy[:-1]
-    #     step_size = np.sqrt(dx**2+dy**2)
-    #     cumulative_distance = np.concatenate(([0], np.cumsum(step_size)))
-    #     df['dist'] = cumulative_distance
-
-    #     branch_df.append(df)
-
-    # endbranch = None
-    # maxfa = -10000
-    # for b in range(nbbranches):
-    #     if branch_df[b].fa[0] > maxfa:
-    #         maxfa = branch_df[b].fa[0]
-    #         endbranch = b
-            
-    # newdf = []
-    # newdf.append(branch_df[endbranch])
-    # for b in range(nbbranches):
-    #     if b != endbranch:
-    #         newdf.append(branch_df[b])
 
     return grid, branches, dist, branch_df

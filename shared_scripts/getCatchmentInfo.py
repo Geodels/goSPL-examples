@@ -1,3 +1,10 @@
+"""Script to extract basin outflow locations and discharge from goSPL output files.
+
+This script reads a CSV index of model output files and writes per-time-step
+CSV files containing the highest flow and sediment discharge location for each basin.
+It is designed to run under MPI to distribute basin processing across ranks.
+"""
+
 import os
 import argparse
 import xarray as xr

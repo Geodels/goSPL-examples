@@ -1,3 +1,10 @@
+"""Mesh utilities for creating and interpolating global UGRID and 2D meshes.
+
+This module contains helpers for building spherical UGRID meshes, converting
+between longitude/latitude and Cartesian coordinates, interpolating regular
+fields onto unstructured grids, and computing coastal distances for marine meshes.
+"""
+
 import os
 import gc
 import numpy as np
@@ -97,6 +104,20 @@ def refineGlobalMesh(widthCell, lon, lat, foldername):
     return
 
 def lonlat_to_xyz(lon, lat):
+    """Convert longitude/latitude coordinates to 3D Cartesian coordinates.
+
+    Parameters
+    ----------
+    lon : array_like
+        Longitudes in degrees.
+    lat : array_like
+        Latitudes in degrees.
+
+    Returns
+    -------
+    numpy.ndarray
+        Array of shape (n, 3) containing Cartesian x, y, z coordinates on a unit sphere.
+    """
     
     lon = np.radians(lon)
     lat = np.radians(lat)
@@ -108,6 +129,18 @@ def lonlat_to_xyz(lon, lat):
     return np.column_stack([x, y, z])
 
 def xyz2lonlat(X, Y, Z):
+    """Convert 3D Cartesian coordinates to longitude/latitude.
+
+    Parameters
+    ----------
+    X, Y, Z : array_like
+        Cartesian coordinates.
+
+    Returns
+    -------
+    numpy.ndarray
+        Array of shape (n, 2) containing longitude and latitude in degrees.
+    """
 
     r = np.sqrt(X ** 2 + Y ** 2 + Z ** 2)
     xs = np.array(X)
@@ -125,6 +158,21 @@ def xyz2lonlat(X, Y, Z):
     return lonlat
 
 def planarMesh(nds, outfolder, fvtk=None, fumpas=True, voro=True):
+    """Generate a 2D planar mesh and optionally export VTK/MPAS outputs.
+
+    Parameters
+    ----------
+    nds : xarray.Dataset
+        Input grid dataset containing x, y, and cellwidth variables.
+    outfolder : str
+        Directory to write mesh files.
+    fvtk : str or None
+        Optional VTK filename to save a VTK representation of the mesh.
+    fumpas : bool
+        If True, convert the mesh to MPAS format using MpasMeshConverter.
+    voro : bool
+        If True, export VTK output from MPAS after conversion.
+    """
 
     opts = jigsawpy.jigsaw_jig_t()
     opts.geom_file = outfolder+'/mesh2D.msh'
@@ -386,6 +434,24 @@ def inter2UGRID(ncgrid, ugrid, nfolder, varname, type='face', latlon=True):
 
 
 def performInterp(coords_3d, ncoords_3d, data, mthd='IDW'):
+    """Interpolate data from displaced mesh coordinates back to target points.
+
+    Parameters
+    ----------
+    coords_3d : array_like
+        Original target coordinates in 3D.
+    ncoords_3d : array_like
+        Source coordinates in 3D used for interpolation.
+    data : array_like
+        Data values defined on the source coordinates.
+    mthd : str
+        Interpolation method: 'IDW', 'RBF', or 'KRG'.
+
+    Returns
+    -------
+    numpy.ndarray
+        Interpolated values at the target coordinates.
+    """
 
     # coords_3d = lonlat_to_xyz(coords[:,0],coords[:,1])
     # ncoords_3d = lonlat_to_xyz(ncoords[:,0],ncoords[:,1])
@@ -427,6 +493,22 @@ def performInterp(coords_3d, ncoords_3d, data, mthd='IDW'):
 
 
 def mvNodes(x, y, z, vx, vy, vz, dt):
+    """Move nodes according to a velocity field over a time increment.
+
+    Parameters
+    ----------
+    x, y, z : array_like
+        Original node coordinates.
+    vx, vy, vz : array_like
+        Velocity components for each node.
+    dt : float
+        Time increment over which to displace the nodes.
+
+    Returns
+    -------
+    numpy.ndarray
+        Updated node coordinates after displacement.
+    """
 
     nx = x + vx * dt
     ny = y + vy * dt
@@ -439,6 +521,30 @@ def mvNodes(x, y, z, vx, vy, vz, dt):
 
 
 def get_Tectonic(ufile, data_file, vkeys, zkeys, dkey, dt, mthd='IDW'):
+    """Compute tectonic displacement and update data with interpolation.
+
+    Parameters
+    ----------
+    ufile : str
+        Path to the UGRID mesh dataset containing cell coordinates.
+    data_file : str
+        Path to the data file containing velocity and displacement variables.
+    vkeys : sequence of str
+        Variable names for velocity components [vx, vy, vz].
+    zkeys : sequence of str
+        Variable names for elevation and displacement fields.
+    dkey : str or None
+        Optional additional depth-related variable to include in the tectonic estimate.
+    dt : float
+        Time increment used to advect the nodes.
+    mthd : {'IDW', 'RBF', 'KRG'}
+        Interpolation method.
+
+    Returns
+    -------
+    xarray.Dataset
+        Input dataset augmented with a 'tec' variable representing tectonic rate.
+    """
 
     # Open the UGRID file
     mapds = xr.open_dataset(ufile) 
@@ -478,10 +584,19 @@ def get_Tectonic(ufile, data_file, vkeys, zkeys, dkey, dt, mthd='IDW'):
     return datads
 
 def generateVTKmesh(points, cells):
-    """
-    A global VTK mesh is generated to compute the distance between mesh vertices and coastlines position.
+    """Build a VTK unstructured mesh from vertex coordinates and connectivity.
 
-    The distance to the coastline for every marine vertices is used to define a maximum shelf slope during deposition. The coastline contours are efficiently obtained from VTK contouring function. This function is performed on a VTK mesh which is built in this function.
+    Parameters
+    ----------
+    points : ndarray
+        Array of vertex coordinates with shape (n_vertices, 3).
+    cells : ndarray
+        Polygon connectivity array with shape (n_cells, nodes_per_cell).
+
+    Returns
+    -------
+    vtk.vtkUnstructuredGrid
+        VTK mesh object containing the input points and triangle cells.
     """
 
     vtkMesh = vtk.vtkUnstructuredGrid()
@@ -544,11 +659,23 @@ def generateVTKmesh(points, cells):
 
 
 def globalCoastsTree(coastXYZ, points, seaID, k_neighbors=1):
-    """
-    This function takes all local coastline points and computes locally the distance of all marine points to the coastline.
+    """Compute coastal distance for marine points using a KD-tree.
 
-    :arg coastXYZ: local coastline coordinates
-    :arg k_neighbors: number of nodes to use when querying the kd-tree
+    Parameters
+    ----------
+    coastXYZ : ndarray
+        Coordinates of coastline points.
+    points : ndarray
+        Coordinates of all mesh points.
+    seaID : array_like
+        Boolean or integer indices selecting marine points.
+    k_neighbors : int
+        Number of nearest coastline points to consider.
+
+    Returns
+    -------
+    numpy.ndarray
+        Distances from each marine point to the nearest coastline.
     """
 
     coastDist = np.zeros(len(points))
@@ -566,18 +693,25 @@ def globalCoastsTree(coastXYZ, points, seaID, k_neighbors=1):
 
 
 def distanceCoasts(vtkMesh, points, data, sl, k_neighbors=1):
-    """
-    This function computes for every marine vertices the distance to the closest coastline.
+    """Compute distance from marine points to the nearest coastline in a VTK mesh.
 
-    .. important::
+    Parameters
+    ----------
+    vtkMesh : vtk.vtkUnstructuredGrid
+        Global VTK mesh used for contouring the coastline.
+    points : ndarray
+        Coordinates of all marine mesh points.
+    data : ndarray
+        Elevation values defined at the mesh points.
+    sl : float
+        Sea level threshold used to identify the coastline.
+    k_neighbors : int
+        Number of nearest coastline nodes to use for distance queries.
 
-        The calculation takes advantage of the `vtkContourFilter` function from VTK library
-        which is performed on the **global** VTK mesh. Once the coastlines have been extracted,
-        the distances are obtained by querying a kd-tree (initialised with the coastal nodes) for
-        marine vertices contained within each partition.
-
-    :arg data: local elevation numpy array
-    :arg k_neighbors: number of nodes to use when querying the kd-tree
+    Returns
+    -------
+    numpy.ndarray
+        Distance from each marine point to the nearest coastline.
     """
 
     pointData = vtkMesh.GetPointData()
@@ -609,8 +743,24 @@ def distanceCoasts(vtkMesh, points, data, sl, k_neighbors=1):
 
 
 def getGridCoast(ncgrid, mapds, dcoast, input_path):
+    """Regrid coastal distance data from mesh points to a regular grid.
 
-    ds_locs = xr.Dataset()
+    Parameters
+    ----------
+    ncgrid : xarray.Dataset
+        Regular grid dataset used as the interpolation target.
+    mapds : xarray.Dataset
+        Mesh dataset containing UGRID cell locations.
+    dcoast : ndarray
+        Distance-to-coast values defined on mesh cells.
+    input_path : str
+        Path to store or reuse regridding weights.
+
+    Returns
+    -------
+    xarray.Dataset
+        Regular grid dataset with coastal distance interpolated from mesh points.
+    """
 
     meshLon = mapds['lonCell'].values
     meshLat = mapds['latCell'].values
@@ -641,8 +791,22 @@ def getGridCoast(ncgrid, mapds, dcoast, input_path):
 
 
 def getGridCoast2D(ncgrid, dual_mesh, dcoast):
+    """Interpolate coastal distance from a dual mesh onto a 2D regular grid.
 
-    xi, yi = np.meshgrid(ncgrid.x.values, ncgrid.y.values)
+    Parameters
+    ----------
+    ncgrid : xarray.Dataset
+        Target 2D regular grid dataset with x and y coordinates.
+    dual_mesh : object
+        Dual mesh object containing node locations used for interpolation.
+    dcoast : ndarray
+        Distance-to-coast values on the dual mesh nodes.
+
+    Returns
+    -------
+    xarray.Dataset
+        Regular grid dataset with a 'coast' variable.
+    """
     zi = griddata((dual_mesh.uxgrid.node_x.values,
                    dual_mesh.uxgrid.node_y.values), dcoast, (xi, yi),
                    method='cubic')
