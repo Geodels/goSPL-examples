@@ -3,6 +3,10 @@ name: Build and push Docker image
 # Builds the gospl-smoke environment image from environment.yml (via mamba, in the
 # root Dockerfile) and pushes it to Docker Hub as geodels/gospl-examples.
 #
+# The image is built for both linux/amd64 and linux/arm64 (Apple Silicon) using
+# QEMU emulation on the GitHub Actions runner. The arm64 build is slow (~30-60 min)
+# due to QEMU, but only runs on tagged releases or manual triggers.
+#
 # Required repository secrets (Settings > Secrets and variables > Actions):
 #   DOCKERHUB_USERNAME  - a Docker Hub account with push access to geodels/gospl-examples
 #   DOCKERHUB_TOKEN     - a Docker Hub access token for that account
@@ -40,6 +44,9 @@ jobs:
                       /opt/hostedtoolcache/CodeQL /usr/local/share/boost
           sudo docker image prune --all --force || true
           df -h
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
