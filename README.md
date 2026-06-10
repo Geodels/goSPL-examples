@@ -29,40 +29,41 @@ Binder reuses the prebuilt [`geodels/gospl-examples`](https://hub.docker.com/r/g
 
 ## Installation via Docker
 
-The goSPL image contains all the dependencies and configuration files required to run the examples.
+The [`geodels/gospl-examples`](https://hub.docker.com/r/geodels/gospl-examples) image packages the full `gospl-smoke` conda environment (goSPL, PETSc, GMT, VTK, JupyterLab) and is the recommended way to run the examples without a local conda install.
 
-Use the ``gospl:latest`` image to run those examples with the most recent goSPL release.
-
-> **Examples image (built from this repository).** A companion image, [`geodels/gospl-examples`](https://hub.docker.com/r/geodels/gospl-examples), is built automatically from [`environment.yml`](environment.yml) (with `mamba`) by the [`Build and push Docker image`](.github/workflows/docker-build.yml) GitHub Actions workflow and pushed to Docker Hub on each release/tag (or manually). It packages the `gospl-smoke` environment and JupyterLab; mount your examples with `-v "$PWD":/work`. The workflow needs two repository secrets: `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN`.
+> **How the image is built.** The image is built automatically from [`environment.yml`](environment.yml) (via `mamba`) by the [`Build and push Docker image`](.github/workflows/docker-build.yml) GitHub Actions workflow and pushed to Docker Hub on every release tag or manual trigger. Two repository secrets are required: `DOCKERHUB_USERNAME` (a Docker Hub account with push access to `geodels/gospl-examples`) and `DOCKERHUB_TOKEN` (a Read & Write personal access token for that account, generated under Account Settings → Personal access tokens on Docker Hub).
 
 ##### Pulling the image
 
-Once you have installed Docker on your system, you can ``pull`` the
-[goSPL official image](https://hub.docker.com/u/geodels) as follow::
+Once you have installed Docker on your system, pull the examples image:
 
 ```bash
-  docker pull geodels/gospl:latest
+docker pull geodels/gospl-examples:latest
 ```
+
+> **Apple Silicon (M1/M2/M3) users.** The image is built for `linux/amd64` only. On Apple Silicon, add `--platform linux/amd64` to both the pull and run commands to use Rosetta 2 emulation. Alternatively, enable **Settings → General → Use Rosetta for x86_64/amd64 emulation on Apple Silicon** in Docker Desktop to make amd64 images work transparently without the flag.
+>
+> ```bash
+> docker pull --platform linux/amd64 geodels/gospl-examples:latest
+> ```
+
 ##### Starting the container from a terminal
 
-You can then start a docker container (an instance of
-an image)::
+Clone this repository and start the container, mounting it at `/work`:
 
 ```bash
-  docker run -it -p 8888:8888 -d -v localDIR:/notebooks
-```
-where `localDIR` is the directory that contains the examples folder `goSPL-examples`.
-
-Once Docker is running, you could open the Jupyter notebooks on a web browser at the following address: `http://localhost:8888 <http://localhost:8888>`_. Going into the `/notebooks` folder you will access your ``localDIR`` directory.
-
-To run goSPL, you will need to use the terminal from the Jupyter interface. To activate the goSPL environment where all the libraries are installed you will have to run the following command:
-```bash
-  conda activate gospl
+git clone https://github.com/Geodels/goSPL-examples.git
+cd goSPL-examples
+docker run -it --rm -p 8888:8888 -v "$PWD":/work geodels/gospl-examples:latest
 ```
 
-Depending on your operating system, you will be able to configure the docker application to set your resources: CPUs, memory, swap, or Disk image size. This will improve the performance of the run.
+> **Apple Silicon users:** add `--platform linux/amd64` to the `docker run` command above.
 
-> Note that you could use the Dashboard from Docker instead of passing through the terminal to download the goSPL Docker image.
+JupyterLab will start and print a `http://127.0.0.1:8888/lab?token=…` URL — open it in your browser. The full repository is visible under `/work` and the `gospl-smoke` environment is already active (no `conda activate` needed).
+
+Depending on your operating system, you can configure Docker's resource allocation (CPUs, memory, swap, disk image size) to improve performance.
+
+> Note that you can also use the Docker Desktop Dashboard to pull the image instead of the terminal.
 
 ### Running the examples with the `gospl-examples` image
 
