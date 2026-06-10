@@ -64,6 +64,44 @@ Depending on your operating system, you will be able to configure the docker app
 
 > Note that you could use the Dashboard from Docker instead of passing through the terminal to download the goSPL Docker image.
 
+### Running the examples with the `gospl-examples` image
+
+The [`geodels/gospl-examples`](https://hub.docker.com/r/geodels/gospl-examples) image ships the `gospl-smoke` environment only (no notebooks), so you run it against a local clone of this repository mounted at `/work`:
+
+```bash
+git clone https://github.com/Geodels/goSPL-examples.git
+cd goSPL-examples
+docker pull geodels/gospl-examples:latest
+docker run -it --rm -p 8888:8888 -v "$PWD":/work geodels/gospl-examples:latest
+```
+
+JupyterLab starts and prints a `http://127.0.0.1:8888/lab?token=…` URL in the terminal — open it in your browser. Every example in the repository is visible under `/work`. Beyond the one shown below, the repo bundles a range of local and global examples, each pairing **pre-processing** notebooks (`build_inputs.ipynb` / `model_setup.ipynb`) with **post-processing** analysis notebooks (`sims-analysis.ipynb` / `extract_strata.ipynb`) — working through them is the best way to get familiar with goSPL's capabilities, so browse the [examples catalog](#repository-structure) and pick any one.
+
+Each example follows the same three stages:
+
+1. **Build the inputs** — run all cells of the example's `build_inputs.ipynb` / `model_setup.ipynb` to generate the mesh and forcing files.
+2. **Run the model** — open a terminal in JupyterLab (*File ▸ New ▸ Terminal*) and launch goSPL under MPI (command below).
+3. **Analyse the outputs** — run all cells of the example's `sims-analysis.ipynb` / `extract_strata.ipynb` to remap and plot the results.
+
+```bash
+# step 2, inside the container — here the stratigraphic_record example
+cd /work/Local-examples/stratigraphic_record
+mpirun -np 4 python runModel.py -i input-strati.yml
+```
+
+The `gospl-smoke` environment is already on the `PATH` (no `conda activate` needed) and the MPI/libfabric TCP workaround is baked into the image. Change `-np 4` to the number of MPI ranks you want, and `-i` to the example's input file.
+
+#### Quick end-to-end test (no notebook required)
+
+The `stratigraphic_record` example ships its inputs (`inputs/gospl_mesh.npz`, `inputs/sealevel.csv`), so you can run goSPL headless to verify the whole stack in a single command:
+
+```bash
+docker run -it --rm -v "$PWD":/work geodels/gospl-examples:latest \
+  bash -lc "cd /work/Local-examples/stratigraphic_record && mpirun -np 4 python runModel.py -i input-strati.yml"
+```
+
+A successful run prints goSPL's per-step progress and writes its HDF5 outputs into the example folder, ready to be post-processed by `extract_strata.ipynb`. (The `continental_flux` example needs its `build_inputs.ipynb` run first, because its mesh is generated from the `data/*.nc` files.)
+
 ## Detailed Conda installation
 
 One of the simplest way to install not only goSPL, but required dependencies  is with [Anaconda](https://docs.continuum.io/anaconda/), a cross-platform (Linux, Mac OS X, Windows) Python distribution for data analytics and scientific computing.
