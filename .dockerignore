@@ -1,0 +1,14 @@
+# Trim the Docker / repo2docker build context.
+# NB: data/ and inputs/ folders inside the examples are kept — the notebooks need them.
+.git
+.gitignore
+.github
+**/__pycache__/
+**/*.pyc
+**/.DS_Store
+**/.ipynb_checkpoints/
+# Paraview state files are large and not used inside the containers
+**/*.pvsm
+# HPC deployment artefacts (large tarball) are not needed in the image
+hpc-setup/
+notebook_doc_prompt.md
