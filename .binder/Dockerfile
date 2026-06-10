@@ -20,7 +20,12 @@ ENV NB_USER=${NB_USER} \
     HOME=/home/${NB_USER}
 
 USER root
-RUN useradd --create-home --shell /bin/bash --uid ${NB_UID} ${NB_USER}
+# Recent base images (e.g. Ubuntu-based miniforge3) already ship a UID 1000
+# user; drop it so ${NB_USER} can claim that UID, as repo2docker/Binder expect.
+RUN if id -u ${NB_UID} >/dev/null 2>&1; then \
+        userdel -r "$(id -un ${NB_UID})" 2>/dev/null || true; \
+    fi && \
+    useradd --create-home --shell /bin/bash --uid ${NB_UID} ${NB_USER}
 
 # Binder launches the server via `jupyterhub-singleuser`; add it (plus the
 # classic notebook server) to the environment. JupyterLab is already present.
