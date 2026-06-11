@@ -256,8 +256,8 @@ class stratal:
             self._xyz2lonlat()
         else:
             self.lonlat = np.empty((len(self.x), 2))
-            self.lonlat[:, 0] = self.x #[:,0]
-            self.lonlat[:, 1] = self.y #[:,0]
+            self.lonlat[:, 0] = np.asarray(self.x).ravel()
+            self.lonlat[:, 1] = np.asarray(self.y).ravel()
             self.tree = spatial.cKDTree(self.lonlat, leafsize=10)
 
         gc.collect()
