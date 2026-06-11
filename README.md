@@ -9,16 +9,6 @@ Series of examples to illustrate the functionalities of goSPL.
 
 
 [![DOI](https://joss.theoj.org/papers/10.21105/joss.02804/status.svg)](https://doi.org/10.21105/joss.02804)
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/Geodels/goSPL-examples/HEAD?labpath=Local-examples%2Fstratigraphic_record%2Fmodel_setup.ipynb)
-
-## Launch on Binder
-
-You can try a curated subset of the examples in your browser — no installation required — via [Binder](https://mybinder.org/v2/gh/Geodels/goSPL-examples/HEAD). The Binder image is intentionally limited to two representative examples:
-
-- [`Local-examples/stratigraphic_record`](Local-examples/stratigraphic_record)
-- [`Global-examples/continental_flux`](Global-examples/continental_flux)
-
-Binder reuses the prebuilt [`geodels/gospl-examples`](https://hub.docker.com/r/geodels/gospl-examples) Docker image (see [`.binder/Dockerfile`](.binder/Dockerfile)) so the heavy goSPL/PETSc stack does not have to be rebuilt. The full set of examples is best run locally or with Docker (below). Note that Binder sessions are resource-limited, so only the lighter steps of these examples are expected to complete there.
 
 ## Installation via Conda
 
@@ -26,6 +16,8 @@ Binder reuses the prebuilt [`geodels/gospl-examples`](https://hub.docker.com/r/g
   mamba env create -f environment.yml
   conda activate gospl-smoke
 ```
+
+Here for more [details](#detailed-conda-installation).
 
 ## Installation via Docker
 
@@ -106,6 +98,7 @@ docker run -it --rm -v "$PWD":/work geodels/gospl-examples:latest \
 
 A successful run prints goSPL's per-step progress and writes its HDF5 outputs into the example folder, ready to be post-processed by `extract_strata.ipynb`. (The `continental_flux` example needs its `build_inputs.ipynb` run first, because its mesh is generated from the `data/*.nc` files.)
 
+<span id="detailed-conda-installation"></span>
 ## Detailed Conda installation
 
 One of the simplest way to install not only goSPL, but required dependencies  is with [Anaconda](https://docs.continuum.io/anaconda/), a cross-platform (Linux, Mac OS X, Windows) Python distribution for data analytics and scientific computing.
