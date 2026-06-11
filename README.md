@@ -194,7 +194,7 @@ Shared post-processing utilities live in [`shared_scripts/`](shared_scripts) (`m
 
 ## Running goSPL-examples
 
-The examples provided here target the ``2026.06.08`` goSPL release (see [`environment.yml`](environment.yml)) and consist of simple local and global models that illustrate the main capabilities of the code. If you are new to goSPL, start with the local example [`stratigraphic_record`](Local-examples/stratigraphic_record) and the global example [`continental_flux`](Global-examples/continental_flux).
+The examples provided here target the ``2026.06.11`` goSPL release (see [`environment.yml`](environment.yml)) and consist of simple local and global models that illustrate the main capabilities of the code. If you are new to goSPL, start with the local example [`stratigraphic_record`](Local-examples/stratigraphic_record) and the global example [`continental_flux`](Global-examples/continental_flux).
 
 A typical run, from an activated environment, builds the inputs in the relevant notebook, then launches the model from a terminal and finally post-processes the outputs in the analysis notebook:
 
