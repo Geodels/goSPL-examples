@@ -52,6 +52,16 @@ RUN echo "conda activate gospl-smoke" >> /etc/skel/.bashrc && \
 ENV FI_PROVIDER=tcp \
     MPICH_CH4_OFI_ENABLE=0
 
+# Threading defaults for the MPI-parallel solver. goSPL distributes work across
+# MPI ranks, so each rank must run single-threaded BLAS/OpenMP — otherwise every
+# rank spawns as many BLAS threads as there are cores and they oversubscribe the
+# CPU, making the container far slower than a native run. Control parallelism via
+# `mpirun -n <ranks>` instead. Override at runtime with `docker run -e OMP_NUM_THREADS=N`.
+ENV OMP_NUM_THREADS=1 \
+    OPENBLAS_NUM_THREADS=1 \
+    MKL_NUM_THREADS=1 \
+    NUMEXPR_NUM_THREADS=1
+
 WORKDIR /work
 EXPOSE 8888
 
