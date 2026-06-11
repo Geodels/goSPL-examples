@@ -41,10 +41,11 @@ Once you have installed Docker on your system, pull the examples image:
 docker pull geodels/gospl-examples:latest
 ```
 
-> **Apple Silicon (M1/M2/M3) users.** The image is built for `linux/amd64` only. On Apple Silicon, add `--platform linux/amd64` to both the pull and run commands to use Rosetta 2 emulation. Alternatively, enable **Settings → General → Use Rosetta for x86_64/amd64 emulation on Apple Silicon** in Docker Desktop to make amd64 images work transparently without the flag.
+> **Apple Silicon (M1/M2/M3) users.** The image is published as a multi-arch manifest with **native `linux/arm64`** and `linux/amd64` builds, so a plain `docker pull` automatically selects the arm64 image on Apple Silicon — no `--platform` flag and no Rosetta emulation needed. Running the native arm64 image is **much faster** than forcing the amd64 image under emulation, so avoid adding `--platform linux/amd64` on Apple Silicon. You can confirm you got the native build with:
 >
 > ```bash
-> docker pull --platform linux/amd64 geodels/gospl-examples:latest
+> docker run --rm geodels/gospl-examples:latest python -c "import platform; print(platform.machine())"
+> # expect: aarch64 on Apple Silicon, x86_64 on Intel
 > ```
 
 ##### Starting the container from a terminal
@@ -57,7 +58,7 @@ cd goSPL-examples
 docker run -it --rm -p 8888:8888 -v "$PWD":/work geodels/gospl-examples:latest
 ```
 
-> **Apple Silicon users:** add `--platform linux/amd64` to the `docker run` command above.
+> **Apple Silicon users:** no `--platform` flag is needed — Docker pulls the native `linux/arm64` image automatically, which is significantly faster than amd64 emulation.
 
 JupyterLab will start and print a `http://127.0.0.1:8888/lab?token=…` URL — open it in your browser. The full repository is visible under `/work` and the `gospl-smoke` environment is already active (no `conda activate` needed).
 
@@ -91,6 +92,8 @@ mpirun -np 4 python runModel.py -i input-strati.yml
 ```
 
 The `gospl-smoke` environment is already on the `PATH` (no `conda activate` needed) and the MPI/libfabric TCP workaround is baked into the image. Change `-np 4` to the number of MPI ranks you want, and `-i` to the example's input file.
+
+> **Performance — threading.** The image defaults BLAS/OpenMP threads to 1 (`OMP_NUM_THREADS`, `OPENBLAS_NUM_THREADS`, `MKL_NUM_THREADS`, `NUMEXPR_NUM_THREADS`). goSPL gets its parallelism from MPI ranks (`mpirun -np N`), so single-threaded BLAS per rank avoids CPU oversubscription — leaving these unset lets every rank spawn one BLAS thread per core, which can make the container *much* slower than a native run. Set `-np` to the number of physical cores you want to use. For a non-MPI, single-process numpy/numba workload you can re-enable threading with e.g. `docker run -e OMP_NUM_THREADS=8 ...`. Also make sure Docker Desktop is allocated enough CPUs/RAM (Settings → Resources).
 
 #### Quick end-to-end test (no notebook required)
 
