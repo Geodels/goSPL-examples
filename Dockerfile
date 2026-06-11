@@ -23,7 +23,18 @@ RUN conda config --system --set remote_read_timeout_secs 300 && \
     conda config --system --set remote_backoff_factor 5
 
 COPY environment.yml /tmp/environment.yml
-RUN mamba env create -f /tmp/environment.yml && \
+# Retry env creation: the conda-forge CDN occasionally drops large linux-aarch64
+# packages (e.g. pyarrow-core) mid-download, aborting the whole solve. The package
+# cache in /opt/conda/pkgs persists across attempts within this RUN layer, so each
+# retry only re-fetches what is still missing and eventually completes.
+RUN n=0; \
+    until mamba env create -f /tmp/environment.yml; do \
+        n=$((n+1)); \
+        if [ "$n" -ge 6 ]; then echo "mamba env create failed after $n attempts" >&2; exit 1; fi; \
+        echo "mamba env create failed; retry $n/6 in 15s..." >&2; \
+        sleep 15; \
+        rm -rf /opt/conda/envs/gospl-smoke; \
+    done && \
     mamba clean --all --yes && \
     find /opt/conda -follow -type f -name '*.pyc' -delete && \
     rm -f /tmp/environment.yml
@@ -40,6 +51,16 @@ RUN echo "conda activate gospl-smoke" >> /etc/skel/.bashrc && \
 # OFI auto-selection picks the wrong interface.
 ENV FI_PROVIDER=tcp \
     MPICH_CH4_OFI_ENABLE=0
+
+# Threading defaults for the MPI-parallel solver. goSPL distributes work across
+# MPI ranks, so each rank must run single-threaded BLAS/OpenMP — otherwise every
+# rank spawns as many BLAS threads as there are cores and they oversubscribe the
+# CPU, making the container far slower than a native run. Control parallelism via
+# `mpirun -n <ranks>` instead. Override at runtime with `docker run -e OMP_NUM_THREADS=N`.
+ENV OMP_NUM_THREADS=1 \
+    OPENBLAS_NUM_THREADS=1 \
+    MKL_NUM_THREADS=1 \
+    NUMEXPR_NUM_THREADS=1
 
 WORKDIR /work
 EXPOSE 8888
