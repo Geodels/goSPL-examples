@@ -73,24 +73,41 @@ jobs:
         with:
           images: ${{ env.IMAGE }}
 
-      - name: Build and push digest
+      # Wrapped in nick-fields/retry as a belt-and-suspenders backstop: the
+      # Dockerfile already retries flaky conda-forge downloads internally, but if a
+      # whole build still dies (e.g. a transient registry/cache error) this restarts
+      # it. The gha cache rehydrates between attempts, so a retry resumes most of the
+      # work rather than rebuilding from scratch. Raw `docker buildx build` is used
+      # because nick-fields/retry runs a shell command, not a `uses:` action.
+      - name: Build and push digest (with retry)
         id: build
-        uses: docker/build-push-action@v6
+        uses: nick-fields/retry@v3
+        env:
+          LABELS: ${{ steps.meta.outputs.labels }}
         with:
-          context: .
-          file: ./Dockerfile
-          push: true
-          platforms: ${{ matrix.platform }}
-          labels: ${{ steps.meta.outputs.labels }}
-          # Push to a temporary digest (no tag yet — tags are applied in merge)
-          outputs: type=image,name=${{ env.IMAGE }},push-by-digest=true,name-canonical=true,push=true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          timeout_minutes: 90
+          max_attempts: 3
+          retry_wait_seconds: 30
+          command: |
+            label_args=()
+            while IFS= read -r line; do
+              [ -n "$line" ] && label_args+=(--label "$line")
+            done <<< "$LABELS"
+            docker buildx build \
+              --platform "${{ matrix.platform }}" \
+              --file ./Dockerfile \
+              "${label_args[@]}" \
+              --provenance=false \
+              --output "type=image,name=${IMAGE},push-by-digest=true,name-canonical=true,push=true" \
+              --cache-from type=gha \
+              --cache-to type=gha,mode=max \
+              --metadata-file /tmp/metadata.json \
+              .
 
       - name: Export digest
         run: |
           mkdir -p /tmp/digests
-          digest="${{ steps.build.outputs.digest }}"
+          digest=$(jq -r '."containerimage.digest"' /tmp/metadata.json)
           touch "/tmp/digests/${digest#sha256:}"
 
       - name: Upload digest artifact

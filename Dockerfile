@@ -23,7 +23,18 @@ RUN conda config --system --set remote_read_timeout_secs 300 && \
     conda config --system --set remote_backoff_factor 5
 
 COPY environment.yml /tmp/environment.yml
-RUN mamba env create -f /tmp/environment.yml && \
+# Retry env creation: the conda-forge CDN occasionally drops large linux-aarch64
+# packages (e.g. pyarrow-core) mid-download, aborting the whole solve. The package
+# cache in /opt/conda/pkgs persists across attempts within this RUN layer, so each
+# retry only re-fetches what is still missing and eventually completes.
+RUN n=0; \
+    until mamba env create -f /tmp/environment.yml; do \
+        n=$((n+1)); \
+        if [ "$n" -ge 6 ]; then echo "mamba env create failed after $n attempts" >&2; exit 1; fi; \
+        echo "mamba env create failed; retry $n/6 in 15s..." >&2; \
+        sleep 15; \
+        rm -rf /opt/conda/envs/gospl-smoke; \
+    done && \
     mamba clean --all --yes && \
     find /opt/conda -follow -type f -name '*.pyc' -delete && \
     rm -f /tmp/environment.yml
