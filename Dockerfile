@@ -15,6 +15,13 @@ LABEL org.opencontainers.image.title="goSPL-examples" \
       org.opencontainers.image.licenses="GPL-3.0"
 
 # --- Build the conda environment from environment.yml using mamba ---
+# Increase download timeouts and retries to handle slow conda-forge mirrors,
+# particularly for linux-aarch64 packages on GitHub Actions arm64 runners.
+RUN conda config --system --set remote_read_timeout_secs 300 && \
+    conda config --system --set remote_connect_timeout_secs 60 && \
+    conda config --system --set remote_max_retries 10 && \
+    conda config --system --set remote_backoff_factor 5
+
 COPY environment.yml /tmp/environment.yml
 RUN mamba env create -f /tmp/environment.yml && \
     mamba clean --all --yes && \
