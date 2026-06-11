@@ -6,7 +6,7 @@ channels:
 dependencies:
   - python=3.11
   - numpy<2
-  - gospl=2026.06.08
+  - gospl=2026.06.11
   - gmt
   - pygmt
   - hdf4

@@ -15,7 +15,7 @@ name: Build and push Docker image
 #   DOCKERHUB_TOKEN     - a Docker Hub access token for that account
 #
 # Triggers: publishing a GitHub release, pushing a git tag, or running manually.
-# Published tags: the git tag name (e.g. 2026.06.08) plus `latest`.
+# Published tags: the git tag name (e.g. 2026.06.11) plus `latest`.
 
 on:
   release:
