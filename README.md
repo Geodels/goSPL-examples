@@ -14,12 +14,21 @@ _Series of examples to illustrate the functionalities of goSPL._
 
 Full docs are available at: https://gospl.readthedocs.io/en/latest/
 
-## Installation via Conda
+## Installation via mamba / micromamba
+
+We strongly recommend **`mamba`** or **`micromamba`** over plain `conda`: they use the fast `libsolv` resolver and reliably solve goSPL's heavy MPI/geospatial stack (the classic conda solver can stall or crash on it).
 
 ```bash
-  mamba env create -f environment.yml
-  conda activate gospl-smoke
+# with mamba
+mamba env create -f environment.yml
+mamba activate gospl-smoke
+
+# or with micromamba (no base install needed)
+micromamba create -f environment.yml
+micromamba activate gospl-smoke
 ```
+
+> Plain `conda env create -f environment.yml` also works *if* you first enable the libmamba solver (`conda install -n base conda-libmamba-solver && conda config --set solver libmamba`); otherwise the classic solver may fail on this environment.
 
 Here for more [details](#detailed-conda-installation).
 
@@ -73,21 +82,21 @@ docker pull geodels/gospl-examples:latest
 docker run -it --rm -p 8888:8888 -v "$PWD":/work geodels/gospl-examples:latest
 ```
 
-JupyterLab starts and prints a `http://127.0.0.1:8888/lab?token=…` URL in the terminal — open it in your browser. Every example in the repository is visible under `/work`. Beyond the one shown below, the repo bundles a range of local and global examples, each pairing **pre-processing** notebooks (`build_inputs.ipynb` / `model_setup.ipynb`) with **post-processing** analysis notebooks (`sims-analysis.ipynb` / `extract_strata.ipynb`) — working through them is the best way to get familiar with goSPL's capabilities, so browse the [examples catalog](#repository-structure) and pick any one.
+JupyterLab starts and prints a `http://127.0.0.1:8888/lab?token=…` URL in the terminal — open it in your browser. Every example in the repository is visible under `/work`. Beyond the one shown below, the repo bundles a range of local and global examples, each pairing a **pre-processing** notebook (`build_inputs.ipynb` / `model_setup.ipynb`) with a **post-processing** notebook (`view_Results.ipynb`) — working through them is the best way to get familiar with goSPL's capabilities, so browse the [examples catalog](#repository-structure) and pick any one.
 
 Each example follows the same three stages:
 
 1. **Build the inputs** — run all cells of the example's `build_inputs.ipynb` / `model_setup.ipynb` to generate the mesh and forcing files.
-2. **Run the model** — open a terminal in JupyterLab (*File ▸ New ▸ Terminal*) and launch goSPL under MPI (command below).
-3. **Analyse the outputs** — run all cells of the example's `sims-analysis.ipynb` / `extract_strata.ipynb` to remap and plot the results.
+2. **Run the model** — open a terminal in JupyterLab (*File ▸ New ▸ Terminal*) and launch goSPL under MPI with the `gospl` command (below).
+3. **Analyse the outputs** — run all cells of the example's `view_Results.ipynb` to remap and plot the results (these use the `gospl-*` post-processing tools — see [Post-processing with the `gospl-*` tools](#post-processing-with-the-gospl-tools)).
 
 ```bash
 # step 2, inside the container — here the stratigraphic_record example
 cd /work/Local-examples/stratigraphic_record
-mpirun -np 4 python runModel.py -i input-strati.yml
+mpirun -np 4 gospl -i input-strati.yml
 ```
 
-The `gospl-smoke` environment is already on the `PATH` (no `conda activate` needed) and the MPI/libfabric TCP workaround is baked into the image. Change `-np 4` to the number of MPI ranks you want, and `-i` to the example's input file.
+`gospl` is the console entry point installed with the package (equivalent to the old `python runModel.py`). The `gospl-smoke` environment is already on the `PATH` (no `conda activate` needed) and the MPI/libfabric TCP workaround is baked into the image. Change `-np 4` to the number of MPI ranks you want, and `-i` to the example's input file (add `-v` for verbose progress).
 
 > **Performance — threading.** The image defaults BLAS/OpenMP threads to 1 (`OMP_NUM_THREADS`, `OPENBLAS_NUM_THREADS`, `MKL_NUM_THREADS`, `NUMEXPR_NUM_THREADS`). goSPL gets its parallelism from MPI ranks (`mpirun -np N`), so single-threaded BLAS per rank avoids CPU oversubscription — leaving these unset lets every rank spawn one BLAS thread per core, which can make the container *much* slower than a native run. Set `-np` to the number of physical cores you want to use. For a non-MPI, single-process numpy/numba workload you can re-enable threading with e.g. `docker run -e OMP_NUM_THREADS=8 ...`. Also make sure Docker Desktop is allocated enough CPUs/RAM (Settings → Resources).
 
@@ -97,10 +106,10 @@ The `stratigraphic_record` example ships its inputs (`inputs/gospl_mesh.npz`, `i
 
 ```bash
 docker run -it --rm -v "$PWD":/work geodels/gospl-examples:latest \
-  bash -lc "cd /work/Local-examples/stratigraphic_record && mpirun -np 4 python runModel.py -i input-strati.yml"
+  bash -lc "cd /work/Local-examples/stratigraphic_record && mpirun -np 4 gospl -i input-strati.yml"
 ```
 
-A successful run prints goSPL's per-step progress and writes its HDF5 outputs into the example folder, ready to be post-processed by `extract_strata.ipynb`. (The `continental_flux` example needs its `build_inputs.ipynb` run first, because its mesh is generated from the `data/*.nc` files.)
+A successful run prints goSPL's per-step progress and writes its HDF5 outputs into the example folder, ready to be post-processed by `view_Results.ipynb`. (The `continental_flux` example needs its `build_inputs.ipynb` run first, because its mesh is generated from the `data/*.nc` files.)
 
 <span id="detailed-conda-installation"></span>
 ## Detailed Conda installation
@@ -137,10 +146,10 @@ Alternatively you can get it from your preferred web browser by clicking on the 
 
 Once the [environment.yml](https://raw.githubusercontent.com/Geodels/goSPL-examples/master/environment.yml) file has been downloaded on your system. The following directives provide a step-by-step guide to create a local conda environment for goSPL.
 
-Navigate to the directory containing the [environment.yml](https://raw.githubusercontent.com/Geodels/goSPL-examples/master/environment.yml) file and run the following commands from a terminal window:
+Navigate to the directory containing the [environment.yml](https://raw.githubusercontent.com/Geodels/goSPL-examples/master/environment.yml) file and create the environment with **`mamba`** (or **`micromamba`**) — these are much faster and more reliable than plain `conda` on goSPL's MPI/geospatial stack:
 
 ```console
-    conda env create -f environment.yml
+    mamba env create -f environment.yml       # or:  micromamba create -f environment.yml
 ```
 
 This will create an environment with the dependencies and packages required to run goSPL-examples.
@@ -149,14 +158,16 @@ To put your self inside this environment run::
 
 
 ```console
-    conda activate gospl-smoke
+    mamba activate gospl-smoke                 # or:  micromamba activate gospl-smoke
 ```
 
 To install other packages, jupyter for example::
 
 ```console
-    conda install jupyter
+    mamba install jupyter
 ```
+
+> If you only have `conda`, first enable the fast solver — `conda install -n base conda-libmamba-solver && conda config --set solver libmamba` — otherwise the classic solver can fail to resolve this environment.
 
 After your environment has been activated, you can either use VS-code or jupyter for running those examples on your local computer. 
 
@@ -165,10 +176,10 @@ After your environment has been activated, you can either use VS-code or jupyter
 Each example lives in its own folder and follows the same three-stage workflow:
 
 1. **`build_inputs.ipynb`** / **`model_setup.ipynb`** — build the mesh and the forcing fields (elevation, rainfall, tectonics, sea level) and export them as the `.npz` / `netCDF` files goSPL reads.
-2. **`runModel.py`** + **`input-*.yml`** — the goSPL driver script and its YAML configuration; launched from a terminal, optionally under MPI.
-3. **`sims-analysis.ipynb`** / **`extract_strata.ipynb`** — post-process the HDF5 outputs (remap to a regular grid; extract elevation, erosion–deposition `erodep`, flow accumulation, stratigraphy) and visualise the results.
+2. **`gospl -i input-*.yml`** — run the model from its YAML configuration with the `gospl` console command, optionally under MPI (`mpirun -np N gospl -i input-*.yml`).
+3. **`view_Results.ipynb`** — post-process the HDF5 outputs with the `gospl-*` tools (remap to a regular grid / NetCDF, extract elevation, erosion–deposition `erodep`, flow accumulation, per-basin flux, stratigraphy) and visualise the results.
 
-Shared post-processing utilities live in [`shared_scripts/`](shared_scripts) (`mapOutputs`, `extractBasin`, `getCatchmentInfo`, `stratal`, `umeshFcts`), and HPC deployment notes are in [`hpc-setup/`](hpc-setup).
+Mesh-building helpers shared across examples live in [`shared_scripts/umeshFcts.py`](shared_scripts) (`ufcts`); the post-processing that used to sit in `shared_scripts` is now provided by goSPL's installed `gospl-*` console tools (see below).
 
 ### Global examples
 
@@ -186,19 +197,35 @@ Shared post-processing utilities live in [`shared_scripts/`](shared_scripts) (`m
 | [`flow_direction`](Local-examples/flow_direction) | Comparison of flow-routing schemes — single-flow (SFD), two-neighbour and multiple-flow-direction (MFD). |
 | [`implicit_timestepping`](Local-examples/implicit_timestepping) | Sensitivity of the implicit solver to the time step Δt (500 yr → 5 kyr): stability versus accuracy. |
 | [`escarpment_retreat`](Local-examples/escarpment_retreat) | Retreat of a rifted-margin escarpment under fluvial incision, hillslope diffusion, orographic rain and flexure. |
-| [`glacial_erosion`](Local-examples/glacial_erosion) | Glacial erosion coupled with river/soil transport and critical-slope diffusion (run scripts only). |
+| [`glacial_erosion`](Local-examples/glacial_erosion) | Glacial erosion coupled with river/soil transport and critical-slope diffusion. |
+| [`soil_generation`](Local-examples/soil_generation) | Soil production from bedrock weathering coupled with river transport and hillslope diffusion. |
 | [`stratigraphic_record`](Local-examples/stratigraphic_record) | Building a passive-margin model that records stratigraphy, then extracting stratal architecture and a Wheeler (chronostratigraphic) chart. |
+| [`dual_lithology`](Local-examples/dual_lithology) | Dual-lithology (coarse/fine) erosion–deposition with sediment-provenance tracking — attributes deposited sediment back to its source region. |
 
 ## Running goSPL-examples
 
 The examples provided here target the ``2026.6.30`` goSPL release (see [`environment.yml`](environment.yml)) and consist of simple local and global models that illustrate the main capabilities of the code. If you are new to goSPL, start with the local example [`stratigraphic_record`](Local-examples/stratigraphic_record) and the global example [`continental_flux`](Global-examples/continental_flux).
 
-A typical run, from an activated environment, builds the inputs in the relevant notebook, then launches the model from a terminal and finally post-processes the outputs in the analysis notebook:
+A typical run, from an activated environment, builds the inputs in the relevant notebook, then launches the model from a terminal with the `gospl` command, and finally post-processes the outputs in `view_Results.ipynb`:
 
 ```bash
-conda activate gospl-smoke
+mamba activate gospl-smoke          # or: micromamba activate gospl-smoke
 cd Local-examples/stratigraphic_record
-mpirun -np 4 python runModel.py -i input-strati.yml
+mpirun -np 4 gospl -i input-strati.yml
 ```
 
-Replace `4` with the number of MPI processes to use and `input-strati.yml` with the example's input file. Add `-v` for verbose output.
+`gospl` is the console entry point installed with the package. Replace `4` with the number of MPI processes to use and `input-strati.yml` with the example's input file. Add `-v` for verbose output; `gospl --help` lists all options (`--log`, `--profile`, `--version`).
+
+<span id="post-processing-with-the-gospl-tools"></span>
+### Post-processing with the `gospl-*` tools
+
+Installing goSPL also installs a set of console commands for post-processing the HDF5 outputs — these are what the `view_Results.ipynb` notebooks call under the hood, and they can also be run standalone from a terminal. Append `--help` to any of them for the full option list.
+
+| Command | Purpose & example |
+|---|---|
+| `gospl-grid` | Remap goSPL outputs onto a regular grid / NetCDF (elevation, `erodep`, flow accumulation, chi, …). <br>`gospl-grid --h5dir out/h5 --mesh mesh.npz --out surface.nc` |
+| `gospl-section` | Stratigraphic cross-sections and Wheeler (chronostratigraphic) diagrams. <br>`gospl-section --h5dir out/h5 --mesh mesh.npz --kind cross --out section.pdf` |
+| `gospl-strata-volume` | Export the stratigraphic mesh / per-layer volumes. <br>`gospl-strata-volume --h5dir out/h5 --outdir strata` |
+| `gospl-catchment` | Per-basin water and sediment outflow from a gridded NetCDF. <br>`gospl-catchment -i surface.nc -o catchments.nc` |
+| `gospl-provenance` | Sediment-provenance attribution (source region → sink). <br>`gospl-provenance --mesh-npz mesh.npz --h5dir out/h5 --steps 0:50 --source source.npz` |
+| `gospl-ela` | Equilibrium-line-altitude (ELA) field from a temperature map. <br>`gospl-ela --temperature temp.npz` |
