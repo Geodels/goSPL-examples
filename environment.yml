@@ -1,4 +1,4 @@
-name: gospl-smoker
+name: gospl-smoke
 channels:
   - conda-forge
   - geodels
@@ -6,37 +6,36 @@ channels:
 dependencies:
   - python=3.11
   - numpy<2
+  # goSPL itself — pulls numpy/scipy/pandas/h5py(mpi)/hdf5(mpi)/vtk-base/
+  # ruamel.yaml/openmpi/mpi4py/petsc/petsc4py/pyshtools as run-deps, so those
+  # are intentionally NOT listed again here (re-listing bare h5py/hdf5/petsc
+  # can fight goSPL's MPI-pinned builds).
   - gospl=2026.6.30
-  - gmt
-  - pygmt
-  - hdf4
-  - libnetcdf
-  - hdf5
-  - netcdf4
-  - vtk
-  - scipy
-  - pandas
+  # goSPL [analysis] optional extras — NOT in goSPL's conda run-deps, so the
+  # analysis tools (gospl-grid/-section/-catchment, provenance) would otherwise
+  # hit their try/except fallbacks. matplotlib + netcdf4 also imported directly.
   - matplotlib
-  - xarray
-  - h5py
-  - mpi4py
-  - petsc
-  - petsc4py
-  - pyshtools
-  - meshio
-  - geopandas
-  - cartopy
-  - rasterio
+  - netcdf4
   - numba
-  - pyyaml
-  - pyinterp
-  - esmpy
+  - geopandas
+  # Analysis / visualisation imported directly by the notebooks & scripts.
+  - xarray
+  - meshio
   - uxarray
+  - pygmt
+  - cartopy
+  - rioxarray
+  - xesmf
+  - pyinterp
   - jigsawpy
-  - triangle
+  - mpas_tools
+  - joblib
+  # Jupyter runtime.
   - jupyterlab
   - ipywidgets
   - ipykernel
-  - mpas_tools
-  - rioxarray
-  - xesmf
+  # perlin_noise is PyPI-only (used by the dual_lithology / stratigraphic_record
+  # model_setup notebooks); install via pip.
+  - pip
+  - pip:
+      - perlin-noise
