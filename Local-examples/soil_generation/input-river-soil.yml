@@ -1,0 +1,80 @@
+name: Test river erosion
+
+domain:
+    npdata: ['data/gospl_mesh','v','c','z']   # initial mesh: path, vertices, cells, elevation (.npz)
+    flowdir: 5                # flow-direction method; 1 (SFD) to 6 (MFD)
+    bc: 'oooo'                # boundary conditions N,E,S,W; o=open f=fixed w=wall
+    # seadepo: False
+
+time:
+    start: 0.                 # model start time (years)
+    end: 1.e5                 # model end time (years)
+    tout: 1.e4                # output interval (years)
+    dt: 5.e3                  # internal time step (years)
+
+spl:
+    K: 4.e-6                  # stream-power erodibility in E = K (P^d A)^m S^n
+    d: 0.                     # precipitation exponent (default 0.0)
+    m: 0.5                    # flow-accumulation/area exponent (default 0.5)
+    G: 0.                     # continental deposition coeff (default 0.0; >0 = transport-limited)
+
+soil:
+    soilK: 8.e-6              # soil erodibility coefficient
+    solver: 'ngmres'          # soil solver
+    pcType: 'hypre'           # soil preconditionner
+    rtol: 1.e-5               # relative convergence tolerance
+    atol: 1.e-5               # absolute convergence tolerance
+    maxProd: 50.e-6           # maximum soil production rate (m/yr)
+    depthProd: 1.0            # soil production decay depth (m)
+    roughnessL: 1.0           # roughness length scale
+    decayDepth: 0.7           # soil transport decay depth (m) for non-linear diffusion
+    bedrockConv: 1.e-8        # soil-to-bedrock conversion fraction
+    uniform: 0.5              # uniform initial soil thickness (m)
+
+diffusion:
+    hillslopeKa: 1.0          # aerial linear hillslope diffusivity (m^2/yr)
+    hillslopeKm: 2.0          # marine linear hillslope diffusivity (m^2/yr)
+    hillslopenl: 2.5          # slope exponent of non-critical non-linear hillslope creep
+#     hillslopeSc: 0.8
+#     hillslopeNb: 4
+    # Marine fluvial deposition
+    nonlinKm: 120             # non-linear diffusivity for fresh marine river sediment (m^2/yr)
+    clinSlp: 5.e-4            # max clinoform slope; caps marine deposit top vs shore distance
+
+flexure: 
+    method: 'fem'             # 'fem' (flat/2D) or 'global' (spherical)
+    thick: 5.e3               # elastic thickness Te (m)
+    rhoc: 2300.0              # crust/sediment load density (kg/m^3)
+    rhoa: 3300.0              # asthenosphere density (kg/m^3)
+    young: 65e9               # Young's modulus (Pa)
+    nu: 0.25                  # Poisson ratio
+    bcN: "Mirror"             # north edge boundary (0Slope0Shear/Mirror/0Displacement0Slope)
+    bcE: "Mirror"             # east edge boundary (0Slope0Shear/Mirror/0Displacement0Slope)
+    bcS: "Mirror"             # south edge boundary (0Slope0Shear/Mirror/0Displacement0Slope)
+    bcW: "Mirror"             # west edge boundary (0Slope0Shear/Mirror/0Displacement0Slope)
+
+sea:
+    position: 0.              # relative sea-level position (m) (default 0)
+
+climate:
+  - start: 0.                 # event start time (years)
+    uniform: 1                # uniform rainfall over whole mesh (m/yr)
+
+# orography:
+#     regdx: 1000.
+#     latitude: 40.0 # Average latitude used to compute the Coriolis factors [degrees btw -90 and 90]
+#     wind_speed: 30.0 # wind speed m/s
+#     wind_dir: 270 # wind direction [0: north, 270: west]
+#     nm: 0.001 # moist stability frequency [1/s]
+#     env_lapse_rate: -0.25 # environmental lapse rate [degrees Celsius/km]
+#     moist_lapse_rate: -0.5 # moist adiabatic lapse rate [degrees Celsius/km]
+#     ref_density: 7.4e-3 # reference saturation water vapor density [kg/m^3]
+#     hw:  1000 # water vapor scale height [m]
+#     conv_time: 1000. # cloud water to hydrometeor conversion time [s]
+#     fall_time: 1000. # hydrometeor fallout time [s]
+#     precip_base: 1. # non-orographic, uniform precipitation rate [mm/h]
+#     precip_min: 0.5 # minimum precipitation [mm/h] when precipitation rate <= 0
+#     rainfall_frequency: 1 # number of storm of 1 hour duration per day
+
+output:
+    dir: 'sim_river_soil'     # output directory name

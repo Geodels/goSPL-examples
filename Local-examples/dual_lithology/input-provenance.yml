@@ -1,0 +1,66 @@
+name: Test stratigraphic evolution
+
+domain:
+    npdata: ['inputs/gospl_mesh','v','c','z']   # initial mesh ['path', vertices, cells, elevation] (.npz)
+    bc: 'oooo'   # boundary conditions per edge N,E,S,W (o=open, f=fixed, w=wall)
+    flowdir: 5   # flow-direction method: 1 (SFD) to 6 (MFD)
+
+time:
+    start: 0.   # model start time (years)
+    end: 2.5e5   # model end time (years)
+    tout: 1.e4   # output interval (years)
+    dt: 5.e3   # internal time step (years)
+    strat: 5.e3   # stratigraphic-record update interval (years)
+
+spl:
+    K: 4.e-5   # stream-power erodibility coefficient in E = K (P^d A)^m S^n
+    d: 0.42   # precipitation exponent (default 0.0)
+    m: 0.45   # flow-accumulation/area exponent (default 0.5)
+    # G: 1
+
+diffusion:
+    hillslopeKa: 0.1   # aerial (land) linear hillslope diffusivity (m^2/yr)
+    hillslopeKm: 0.8   # marine linear hillslope diffusivity (m^2/yr)
+    nonlinKm: 1000.   # non-linear diffusivity for fresh river-deposited marine sediment (m^2/yr)
+    clinSlp: 5.e-4   # max clinoform slope; caps marine deposit top vs distance-to-shore
+    # marineSolver: picard   # default is 'ts' (the adaptive non-linear time-stepper)
+    # picardSub: 10          # backward-Euler sub-steps over each goSPL dt (accuracy↕)
+    # picardIts: 2           # Picard (lagged-Cd) iterations per sub-step
+
+flexure:
+    method: 'fem'   # 'fem' (flat/2D) or 'global' (spherical)
+    thick: 30.e3   # elastic thickness Te (m)
+    rhoc: 2300.0   # crust/sediment load density (kg/m^3)
+    rhoa: 3300.0   # asthenosphere density (kg/m^3)
+    young: 65e9   # Young's modulus (Pa)
+    nu: 0.25   # Poisson ratio
+    bcN: "Mirror"   # north edge boundary: 0Slope0Shear, Mirror, or 0Displacement0Slope
+    bcE: "0Slope0Shear"   # east edge boundary: 0Slope0Shear, Mirror, or 0Displacement0Slope
+    bcS: "Mirror"   # south edge boundary: 0Slope0Shear, Mirror, or 0Displacement0Slope
+    bcW: "0Slope0Shear"   # west edge boundary: 0Slope0Shear, Mirror, or 0Displacement0Slope
+
+sea:
+    position: -30.   # relative sea-level position (m) (default 0)
+    curve: 'inputs/sealevel.csv'   # CSV of sea level over time (columns: time yr, position m)
+
+climate:
+  - start: 0.   # event start time (years)
+    uniform: 1   # uniform rainfall applied over whole mesh (m/yr)
+
+provenance:
+    classes: 4
+    source: ['inputs/gospl_mesh', 'rock']    # per-vertex source class
+    # uniform: 0                          #   ... or one class everywhere
+    cu_weight: [0.0, 1.0, 0.0, 0.3]            # optional copper fertility
+
+
+# strata:
+#     dual: True
+#     coarse: {phi0: 0.49, z0: 3700.}
+#     fine:   {phi0: 0.63, z0: 1960., k_factor: 1.5}
+#     bedrock_coarse_frac: 0.6
+#     fine_diff_factor: 2.0
+#     pitInletBias: {coarse: 0.5, fine: 0.0}
+
+output:
+    dir: 'strati_provenance'   # output directory name

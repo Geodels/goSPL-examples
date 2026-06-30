@@ -15,9 +15,18 @@ Local-examples/stratigraphic_record/scripts/__pycache__
 Local-examples/implicit_timestepping/scripts/__pycache__
 
 # Local examples
+Local-examples/dual_lithology/meshinputs0
+Local-examples/dual_lithology/strati*
+Local-examples/dual_lithology/results
+Local-examples/dual_lithology/inputs
+Local-examples/soil_generation/results
+Local-examples/soil_generation/sim_river_soil
+Local-examples/stratigraphic_record/inputs
+Local-examples/stratigraphic_record/advect
 Local-examples/stratigraphic_record/strati*
 Local-examples/stratigraphic_record/results
 Local-examples/stratigraphic_record/meshinputs0
+Local-examples/implicit_timestepping/data
 Local-examples/implicit_timestepping/slope_tec
 Local-examples/implicit_timestepping/sim_slope_*
 Local-examples/implicit_timestepping/results
@@ -27,9 +36,11 @@ Local-examples/generate_2Dmesh/escarpment
 Local-examples/generate_2Dmesh/geotiff*
 Local-examples/flow_direction/sombrero
 Local-examples/flow_direction/results
+Local-examples/flow_direction/data
 Local-examples/flow_direction/sim_*
 Local-examples/escarpment_retreat/escarpment*
 Local-examples/escarpment_retreat/tmp*
+Local-examples/escarpment_retreat/results
 Local-examples/escarpment_retreat/nc-escarpment
 
 # Global examples
@@ -37,14 +48,20 @@ Global-examples/plate_mvt/input_30
 Global-examples/plate_mvt/silico*
 Global-examples/plate_mvt/vars_30
 Global-examples/plate_mvt/export
+Global-examples/plate_mvt/results
+Global-examples/plate_mvt/flowsed
+Global-examples/erodep_1My/nlts
 Global-examples/erodep_1My/export
 Global-examples/erodep_1My/vars_*
 Global-examples/erodep_1My/flowsed
 Global-examples/erodep_1My/silico*
+Global-examples/erodep_1My/picard
+Global-examples/erodep_1My/results
 Global-examples/erodep_1My/input_40
 Global-examples/continental_flux/vars_*
 Global-examples/continental_flux/silico*
 Global-examples/continental_flux/input_*
+Global-examples/continental_flux/results*
 Global-examples/continental_flux/export*
 Global-examples/continental_flux/flowsed
 Global-examples/continental_flux/cellWidth*

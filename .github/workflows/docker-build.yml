@@ -15,7 +15,9 @@ name: Build and push Docker image
 #   DOCKERHUB_TOKEN     - a Docker Hub access token for that account
 #
 # Triggers: publishing a GitHub release, pushing a git tag, or running manually.
-# Published tags: the git tag name (e.g. 2026.6.13) plus `latest`.
+# Published tags: always the git tag name (e.g. 2026.6.23rc1). In addition, a
+# final/stable tag also moves `latest`, while a release-candidate tag (containing
+# "rc") instead moves `rc` — so pre-releases never overwrite the stable `latest`.
 
 on:
   release:
@@ -148,7 +150,8 @@ jobs:
           images: ${{ env.IMAGE }}
           tags: |
             type=ref,event=tag
-            type=raw,value=latest
+            type=raw,value=latest,enable=${{ !contains(github.ref_name, 'rc') }}
+            type=raw,value=rc,enable=${{ contains(github.ref_name, 'rc') }}
             type=raw,value=${{ github.event.inputs.extra_tag }},enable=${{ github.event.inputs.extra_tag != '' }}
 
       - name: Create and push multi-arch manifest

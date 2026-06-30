@@ -1,33 +1,39 @@
 name: Global model 1 Myr evolution without marine deposition on refined UGRID
 
 domain:
-    npdata: ['vars_25_80/mesh','v','c','z']
-    flowdir: 2
-    seadepo: False
+    npdata: ['vars_25_80/mesh','v','c','z']   # initial mesh: path, vertices 'v', cells 'c', elevation 'z' (.npz)
+    flowdir: 2                                # flow-direction method; 1=SFD ... 6=MFD
+    seadepo: True #False                      # enable marine deposition (default True)
 
 time:
-    start: 250.e6
-    end: 251.e6
-    tout: 1.e5
-    dt: 5.e4
+    start: 250.e6                             # model start time (years)
+    end: 251.e6                               # model end time (years)
+    tout: 1.e5                                # output interval (years)
+    dt: 5.e4                                  # internal time step (years)
 
 spl:
-    K: 5.e-6
-    d: 0.42
-    m: 0.5
+    K: 5.e-6                                  # stream-power erodibility K in E=K(P^d A)^m S^n
+    d: 0.42                                   # precipitation exponent (default 0.0)
+    m: 0.5                                    # flow-accumulation/area exponent (default 0.5)
 
 diffusion:
-    hillslopeKa: 0.5
-    hillslopeKm: 2.0
-    nlPitK: 500.0
-    pitInletBias: 0.8 
-
+    hillslopeKa: 0.5                          # aerial (land) linear hillslope diffusivity (m^2/yr)
+    hillslopeKm: 2.0                          # marine linear hillslope diffusivity (m^2/yr)
+    nonlinKm: 5.e4                            # non-linear diffusivity for fresh river-deposited marine sediment (m^2/yr)
+    Gmar: 1.0                                 # marine deposition coefficient (dimensionless)
+    clinSlp: 1.e-5                            # max clinoform slope; caps marine deposit top vs distance-to-shore
+    marineSolver: picard   # default is 'ts' (the adaptive non-linear time-stepper)
+    picardSub: 10          # backward-Euler sub-steps over each goSPL dt (accuracy↕)
+    picardIts: 2           # Picard (lagged-Cd) iterations per sub-step
+    nlPitK: 5.e3                             # non-linear diffusion coeff inside depressions/pits (m^2/yr)
+    pitInletBias: 0.4                         # fraction 0-1 of pit deposits concentrated at inlets (default 0.10)
+    
 sea:
-    position: 0.
+    position: 0.                              # relative sea-level position (m) (default 0)
 
 climate:
-  - start: 250.e6
-    map: ['vars_25_80/rain250','r']
+  - start: 250.e6                             # event start time (years)
+    map: ['vars_25_80/rain250','r']           # per-vertex precipitation grid ['file','key']
 
 output:
-    dir: 'silico_cont'
+    dir: 'silico_cont'                        # output directory name

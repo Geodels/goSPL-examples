@@ -1,0 +1,56 @@
+name: Test advection of the mesh under uniform velocity
+
+domain:
+    npdata: ['inputs/gospl_mesh','v','c','z']   # initial mesh ['path', vertices, cells, elevation] (.npz)
+    bc: 'oooo'   # boundary conditions per edge N,E,S,W (o=open, f=fixed, w=wall)
+    flowdir: 5   # flow-direction method: 1 (SFD) to 6 (MFD)
+    advect: 'iioe2' #'upwind'   # advection scheme: upwind, iioe1, iioe2, interp
+
+time:
+    start: 0.   # model start time (years)
+    end: 2.5e5   # model end time (years)
+    tout: 1.e4   # output interval (years)
+    dt: 5.e3   # internal time step (years)
+
+spl:
+    K: 4.e-5   # stream-power erodibility coefficient in E = K (P^d A)^m S^n
+    d: 0.42   # precipitation exponent (default 0.0)
+    m: 0.45   # flow-accumulation/area exponent (default 0.5)
+
+diffusion:
+    hillslopeKa: 0.1   # aerial (land) linear hillslope diffusivity (m^2/yr)
+    hillslopeKm: 0.8   # marine linear hillslope diffusivity (m^2/yr)
+    nonlinKm: 1000.   # non-linear diffusivity for fresh river-deposited marine sediment (m^2/yr)
+    clinSlp: 5.e-4   # max clinoform slope; caps marine deposit top vs distance-to-shore
+
+sea:
+    position: -30.   # relative sea-level position (m) (default 0)
+    curve: 'inputs/sealevel.csv'   # CSV of sea level over time (columns: time yr, position m)
+
+climate:
+  - start: 0.   # event start time (years)
+    uniform: 1   # uniform rainfall applied over whole mesh (m/yr)
+
+tectonics:
+    - start: 0.   # event start time (years)
+      end: 2.5e5   # event end time (years)
+      hdisp: ['inputs/gospl_mesh','uv']   # ['file','key'] full 3D displacement rate (m/yr)
+
+compaction:
+    phis: 0.49   # surface porosity (default 0.49)
+    z0s: 3700.0   # porosity e-folding depth (m) (default 3700)
+
+flexure:
+    method: 'fem'   # 'fem' (flat/2D) or 'global' (spherical)
+    thick: 30.e3   # elastic thickness Te (m)
+    rhoc: 2300.0   # crust/sediment load density (kg/m^3)
+    rhoa: 3300.0   # asthenosphere density (kg/m^3)
+    young: 65e9   # Young's modulus (Pa)
+    nu: 0.25   # Poisson ratio
+    bcN: "Mirror"   # north edge boundary: 0Slope0Shear, Mirror, or 0Displacement0Slope
+    bcE: "0Slope0Shear"   # east edge boundary: 0Slope0Shear, Mirror, or 0Displacement0Slope
+    bcS: "Mirror"   # south edge boundary: 0Slope0Shear, Mirror, or 0Displacement0Slope
+    bcW: "0Slope0Shear"   # west edge boundary: 0Slope0Shear, Mirror, or 0Displacement0Slope
+
+output:
+    dir: 'advect'   # output directory name

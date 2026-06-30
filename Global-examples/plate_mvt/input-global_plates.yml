@@ -1,41 +1,43 @@
 name: Global model 1 Myr evolution with plate displacement
 
 domain:
-    npdata: ['vars_30/mesh','v','c','z']
-    flowdir: 2
-    seadepo: False
-    advect: 'interp'
+    npdata: ['vars_30/mesh','v','c','z']      # initial mesh: path, vertices 'v', cells 'c', elevation 'z' (.npz)
+    flowdir: 3                                # flow-direction method; 1=SFD ... 6=MFD
+    advect: 'interp'                          # horizontal-displacement advection: upwind/iioe1/iioe2/interp
 
 time:
-    start: 250.e6
-    end: 251.e6
-    tout: 1.e5
-    dt: 5.e4
+    start: 250.e6                             # model start time (years)
+    end: 251.e6                               # model end time (years)
+    tout: 1.e5                                # output interval (years)
+    dt: 5.e4                                  # internal time step (years)
 
 spl:
-    K: 1.e-6
-    d: 0.42
-    m: 0.5
+    K: 1.e-6                                  # stream-power erodibility K in E=K(P^d A)^m S^n
+    d: 0.42                                   # precipitation exponent (default 0.0)
+    m: 0.5                                    # flow-accumulation/area exponent (default 0.5)
 
 diffusion:
-    hillslopeKa: 0.5
-    hillslopeKm: 2.0
-    nonlinKm: 100.
-    clinSlp: 1.e-5
+    hillslopeKa: 0.5                          # aerial (land) linear hillslope diffusivity (m^2/yr)
+    hillslopeKm: 2.0                          # marine linear hillslope diffusivity (m^2/yr)
+    nonlinKm: 100.                            # non-linear diffusivity for fresh river-deposited marine sediment (m^2/yr)
+    clinSlp: 1.e-5                            # max clinoform slope; caps marine deposit top vs distance-to-shore
+    marineSolver: picard   # default is 'ts' (the adaptive non-linear time-stepper)
+    picardSub: 10          # backward-Euler sub-steps over each goSPL dt (accuracy↕)
+    picardIts: 2           # Picard (lagged-Cd) iterations per sub-step
 
 sea:
-    position: 0.
+    position: 0.                              # relative sea-level position (m) (default 0)
 
 tectonics:
-    - start: 250.e6
-      end: 251.e6
-      hdisp: ['vars_30/forcing250','vxyz']
-      upsub: ['vars_30/forcing250','t']
+    - start: 250.e6                           # event start time (years)
+      end: 251.e6                             # event end time (years)
+      hdisp: ['vars_30/forcing250','vxyz']    # full 3D displacement rate ['file','key'] (m/yr)
+      upsub: ['vars_30/forcing250','t']       # vertical uplift/subsidence rate ['file','key'] (m/yr)
     #   zfit: ['vars_30/forcing250','nz']
 
 climate:
-  - start: 250.e6
-    map: ['vars_30/forcing250','r']
+  - start: 250.e6                             # event start time (years)
+    map: ['vars_30/forcing250','r']           # per-vertex precipitation grid ['file','key']
 
 output:
-    dir: 'silico_mvt'
+    dir: 'silico_mvt'                         # output directory name

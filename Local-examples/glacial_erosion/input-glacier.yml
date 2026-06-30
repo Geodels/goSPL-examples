@@ -1,45 +1,53 @@
 name: Test glacial erosion
 
 domain:
-    npdata: ['data/gospl_mesh','v','c','z']
-    flowdir: 8
-    bc: '0000'
-    seadepo: True
+    npdata: ['data/gospl_mesh','v','c','z']   # initial mesh: path, vertices, cells, elevation (.npz)
+    flowdir: 6                # flow-direction method; 1 (SFD) to 6 (MFD)
+    bc: 'oooo'                # boundary conditions N,E,S,W; o=open f=fixed w=wall
+    seadepo: True             # enable marine deposition (default True)
 
 time:
-    start: 0.
-    end: 5.e5
-    tout: 1.e4
-    dt: 5.e3
+    start: 0.                 # model start time (years)
+    end: 1.e5                 # model end time (years)
+    tout: 1.e4                # output interval (years)
+    dt: 5.e3                  # internal time step (years)
 
 spl:
-    K: 2.0e-6
-    d: 0.42
-    m: 0.5
-    n: 1.
+    K: 2.0e-6                 # stream-power erodibility in E = K (P^d A)^m S^n
+    d: 0.42                   # precipitation exponent (default 0.0)
+    m: 0.5                    # flow-accumulation/area exponent (default 0.5)
 
 ice:
-    icedir: 1
-    melt: 10.
-    diff: 20.
-    hterm: 1500.0
-    hela: 1600.0
-    hice: 1900.0
-    fwidth: 1.5
-    eheight: 0.25
-    evol: 'data/ice_evol.csv'
-    Ki: 8.e-6
+    # Either constant glacial parameters
+    hterm: 1200.0
+    hela: 1500.0
+    hice: 1800.0
+    # Or using a file to characterise glacial evolution
+    # evol: 'data/ice_evol.csv' # CSV glacier geometry over time (time,hterm,hela,hice)
+    icedir: 5                 # MFD flow directions for ice routing
+    eheight: 0.5              # Bahr thickness factor
+    fwidth: 1.5               # Bahr width factor
+    melt: 5.                  # ablation in net balance (0 = accumulation-only; 1 = true net; >1 shorter tongues)
+    slide: 1.0e-3             # basal sliding coefficient (Glen sliding law)
+    glen: 3.0                 # Glen sliding exponent n
+    accum_factor: 0.9         # precip -> ice accumulation fraction (optional)
+    accum_max: 2.0            # cap accumulation rate, m ice/yr (optional)
+    abrasion:
+        Kg: 1.0e-3            # vertical abrasion coeff (default 0.0; 0 disables glacial erosion)
+        l: 1.0                # basal-sliding-velocity exponent (default 1.0)
+        Kl: 1.0e-3            # lateral (valley-wall) erosion coeff -> U-shaping
+        lat_l: 1.0            # lateral velocity exponent (defaults to l)
 
 diffusion:
-    hillslopeKa: 0.3
-    hillslopeKm: 0.3
-    nonlinKm: 100.
-    clinSlp: 5.e-4
+    hillslopeKa: 0.3          # aerial linear hillslope diffusivity (m^2/yr)
+    hillslopeKm: 0.3          # marine linear hillslope diffusivity (m^2/yr)
+    hillslopeSc: 0.8          # critical slope for non-linear hillslope creep
+    hillslopeNb: 4            # number of terms in truncated Taylor series (Barnhart)
+    nonlinKm: 100.            # non-linear diffusivity for fresh marine river sediment (m^2/yr)
+    clinSlp: 5.e-4            # max clinoform slope; caps marine deposit top vs shore distance
 
 # flexure: 
-#     method: 'FD'
-#     regdx: 1000.
-#     ninterp: 4
+#     method: 'fem'
 #     thick: 10.e3
 #     rhoc: 2700.0
 #     rhoa: 3300.0
@@ -51,11 +59,11 @@ diffusion:
 #     bcW: "0Displacement0Slope"
 
 sea:
-    position: -100.
+    position: -100.           # relative sea-level position (m) (default 0)
 
 climate:
-  - start: 0.
-    uniform: 1
+  - start: 0.                 # event start time (years)
+    uniform: 1                # uniform rainfall over whole mesh (m/yr)
 
 output:
-    dir: 'sim_glacier'
+    dir: 'sim_glacier'        # output directory name

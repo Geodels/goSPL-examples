@@ -768,6 +768,7 @@ def getGridCoast(ncgrid, mapds, dcoast, input_path):
     meshLon = (meshLon + 180.0) % 360.0 - 180.0
     meshLat = np.degrees(meshLat)
     
+    ds_locs = xr.Dataset()     
     ds_locs["lon"] = xr.DataArray(
         data=meshLon, dims=("locations")
     )

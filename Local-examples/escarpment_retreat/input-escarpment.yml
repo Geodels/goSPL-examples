@@ -1,47 +1,45 @@
 name: Test escarpment retreat
 
 domain:
-    npdata: ['data/escarpment2','v','c','z']
+    npdata: ['data/escarpment','v','c','z']   # initial mesh ['path', vertices, cells, elevation] (.npz)
     # npdata: ['data/mesh','v','c','z']
-    flowdir: 1
-    seadepo: False
-    bc: '1000'
+    flowdir: 1   # flow-direction method: 1 (SFD) to 6 (MFD)
+    seadepo: False   # enable marine deposition (default True)
+    bc: 'oooo'   # boundary conditions per edge N,E,S,W (o=open, f=fixed, w=wall)
 
 time:
-    start: 0.
-    end: 50.e6
-    tout: 1.e6
-    dt: 1.e5
+    start: 0.   # model start time (years)
+    end: 50.e6   # model end time (years)
+    tout: 1.e6   # output interval (years)
+    dt: 1.e5   # internal time step (years)
 
 spl:
-    K: 4.e-6
-    d: 0.
-    m: 0.4
+    K: 4.e-6   # stream-power erodibility coefficient in E = K (P^d A)^m S^n
+    d: 0.   # precipitation exponent (default 0.0)
+    m: 0.4   # flow-accumulation/area exponent (default 0.5)
 
 diffusion:
-    hillslopeKa: 0.2
-    hillslopeKm: 1.0
+    hillslopeKa: 0.2   # aerial (land) linear hillslope diffusivity (m^2/yr)
+    hillslopeKm: 1.0   # marine linear hillslope diffusivity (m^2/yr)
 
-flexure: 
-    method: 'FD'
-    regdx: 5000.
-    ninterp: 4
-    thick: 20.e3
-    rhoc: 2300.0
-    rhoa: 3300.0
-    young: 65e9
-    nu: 0.25
-    bcN: "0Slope0Shear"
-    bcE: "Mirror"
-    bcS: "0Displacement0Slope"
-    bcW: "Mirror"
+flexure:
+    method: 'fem'   # 'fem' (flat/2D) or 'global' (spherical)
+    thick: 30.e3   # elastic thickness Te (m)
+    rhoc: 2300.0   # crust/sediment load density (kg/m^3)
+    rhoa: 3300.0   # asthenosphere density (kg/m^3)
+    young: 65e9   # Young's modulus (Pa)
+    nu: 0.25   # Poisson ratio
+    bcN: "0Slope0Shear"   # north edge boundary: 0Slope0Shear, Mirror, or 0Displacement0Slope
+    bcE: "Mirror"   # east edge boundary: 0Slope0Shear, Mirror, or 0Displacement0Slope
+    bcS: "0Displacement0Slope"   # south edge boundary: 0Slope0Shear, Mirror, or 0Displacement0Slope
+    bcW: "Mirror"   # west edge boundary: 0Slope0Shear, Mirror, or 0Displacement0Slope
 
 sea:
-    position: -10.
+    position: -10.   # relative sea-level position (m) (default 0)
 
 climate:
-  - start: 0.
-    uniform: 1
+  - start: 0.   # event start time (years)
+    uniform: 1   # uniform rainfall applied over whole mesh (m/yr)
 
 output:
-    dir: 'escarpment'
+    dir: 'escarpment'   # output directory name

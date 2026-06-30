@@ -1,4 +1,4 @@
-name: gospl-smoke
+name: gospl-smoker
 channels:
   - conda-forge
   - geodels
@@ -6,7 +6,7 @@ channels:
 dependencies:
   - python=3.11
   - numpy<2
-  - gospl=2026.6.13
+  - gospl=2026.6.30
   - gmt
   - pygmt
   - hdf4
@@ -24,28 +24,16 @@ dependencies:
   - petsc4py
   - pyshtools
   - meshio
-  - pyvista
+  - geopandas
   - cartopy
   - rasterio
-  - pyproj
-  - geopandas-base
-  - shapely
-  - scikit-image
   - numba
-  - dask
-  - pooch
-  - tqdm
   - pyyaml
-  - pyevtk
   - pyinterp
-  - healpix
-  - gflex
   - esmpy
   - uxarray
   - jigsawpy
-  - inpoly
   - triangle
-  - pyshp
   - jupyterlab
   - ipywidgets
   - ipykernel

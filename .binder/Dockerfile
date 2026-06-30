@@ -4,13 +4,15 @@
 # .github/workflows/docker-build.yml) so Binder does NOT rebuild the heavy
 # goSPL / PETSc / GMT stack — which would exceed mybinder.org build limits.
 #
-# NB: this requires geodels/gospl-examples:latest to exist on Docker Hub first
-# (publish a release or run the "Build and push Docker image" workflow).
+# NB: this requires geodels/gospl-examples:rc to exist on Docker Hub first
+# (push a release-candidate tag, e.g. 2026.6.23rc1, or run the "Build and push
+# Docker image" workflow). The `rc` tag tracks the current release candidate; a
+# stable Binder would instead use `:latest`.
 #
 # repo2docker builds this file with the repository root as the build context,
 # so the COPY paths below are relative to the repo root.
 
-FROM geodels/gospl-examples:latest
+FROM geodels/gospl-examples:rc
 
 # --- repo2docker / Binder requirements: a non-root user with UID 1000 ---
 ARG NB_USER=jovyan

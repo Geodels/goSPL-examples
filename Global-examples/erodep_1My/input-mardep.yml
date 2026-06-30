@@ -1,46 +1,62 @@
 name: Global model 1 Myr evolution with marine deposition and flexure on refined UGRID
 
 domain:
-    npdata: ['vars_40/mesh','v','c','z']
-    flowdir: 3
+    npdata: ['vars_40/mesh','v','c','z']      # initial mesh: path, vertices 'v', cells 'c', elevation 'z' (.npz)
+    flowdir: 5                                # flow-direction method; 1=SFD ... 6=MFD
 
 time:
-    start: 251.e6
-    end: 252.e6
-    tout: 1.e5
-    dt: 5.e4
+    start: 251.e6                             # model start time (years)
+    end: 252.e6                               # model end time (years)
+    tout: 1.e5                                # output interval (years)
+    dt: 5.e4                                  # internal time step (years)
 
 spl:
-    K: 3.e-6
-    d: 0.42
-    m: 0.5
+    K: 3.e-6                                  # stream-power erodibility K in E=K(P^d A)^m S^n
+    d: 0.42                                   # precipitation exponent (default 0.0)
+    m: 0.5                                    # flow-accumulation/area exponent (default 0.5)
+    G: 2                                      # continental deposition coeff (default 0; >0 transport-limited)
+
+# diffusion:
+#     hillslopeKa: 0.5     # aerial (land) LINEAR hillslope/soil-creep diffusivity (m²/yr)
+#     hillslopeKm: 2.0     # marine (subaqueous) LINEAR hillslope diffusivity (m²/yr)
+#     nonlinKm:   1.e4     # NON-LINEAR diffusivity for freshly river-deposited
+#                          #   marine sediment (m²/yr) — THIS is what the marine
+#                          #   diffusion solver (TS *or* Picard) integrates
+#     Gmar:       0.5      # dimensionless marine deposition coefficient (the
+#                          #   coupled h/q Schur deposition solve, _depMarineSystem)
+#     clinSlp:    1.e-5    # max clinoform slope; caps the top of marine deposits
+#                          #    vs distance-to-shore
 
 diffusion:
-    hillslopeKa: 0.5
-    hillslopeKm: 2.0
-    nonlinKm: 1.e4
-    Gmar: 0.5
-    clinSlp: 1.e-5
+    hillslopeKa: 0.5                          # aerial (land) linear hillslope diffusivity (m^2/yr)
+    hillslopeKm: 2.0                          # marine linear hillslope diffusivity (m^2/yr)
+    nonlinKm: 1.e4                            # non-linear diffusivity for fresh river-deposited marine sediment (m^2/yr)
+    Gmar: 0.5                                 # marine deposition coefficient (dimensionless)
+    clinSlp: 1.e-5                            # max clinoform slope; caps marine deposit top vs distance-to-shore
+    marineSolver: picard   # default is 'ts' (the adaptive non-linear time-stepper)
+    picardSub: 10          # backward-Euler sub-steps over each goSPL dt (accuracy↕)
+    picardIts: 2           # Picard (lagged-Cd) iterations per sub-step
 
-flexure: 
-    method: 'global'
-    thick: 30.e3
-    rhoc: 2300.0
-    rhoa: 3300.0
-    young: 65e9
-    nu: 0.25
-    res_deg: 0.25
+flexure:
+    method: 'global'                          # 'fem' (flat/2D) or 'global' (spherical)
+    thick: 30.e3                              # elastic thickness Te (m)
+    rhoc: 2300.0                              # crust/sediment load density (kg/m^3)
+    rhoa: 3300.0                              # asthenosphere density (kg/m^3)
+    young: 65e9                               # Young's modulus (Pa)
+    nu: 0.25                                  # Poisson ratio
+    res_deg: 0.25                             # Driscoll-Healy grid resolution in degrees (global method)
+    interval: 1                               # Apply flexure only every interval goSPL steps
 
 temap:
-  - start: 251.e6
-    map: ['vars_40/forcing251', 'te']
+  - start: 251.e6                             # time (years) the elastic-thickness map becomes active
+    map: ['vars_40/forcing251', 'te']         # per-vertex elastic thickness ['file','key']
 
 sea:
-    position: 0.
+    position: 0.                              # relative sea-level position (m) (default 0)
 
 climate:
-  - start: 251.e6
-    map: ['vars_40/forcing251','r']
+  - start: 251.e6                             # event start time (years)
+    map: ['vars_40/forcing251','r']           # per-vertex precipitation grid ['file','key']
 
 output:
-    dir: 'silico_mardep2'
+    dir: 'silico_mardep'                               # output directory name
