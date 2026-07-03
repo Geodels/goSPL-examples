@@ -157,7 +157,8 @@ def xyz2lonlat(X, Y, Z):
 
     return lonlat
 
-def planarMesh(nds, outfolder, fvtk=None, fumpas=True, voro=True):
+def planarMesh(nds, outfolder, fvtk=None, fumpas=True, voro=True,
+               reuse_existing=True):
     """Generate a 2D planar mesh and optionally export VTK/MPAS outputs.
 
     Parameters
@@ -172,6 +173,9 @@ def planarMesh(nds, outfolder, fvtk=None, fumpas=True, voro=True):
         If True, convert the mesh to MPAS format using MpasMeshConverter.
     voro : bool
         If True, export VTK output from MPAS after conversion.
+    reuse_existing : bool
+        If True, skip the expensive Jigsaw/MPAS pipeline when the requested
+        outputs already exist.
     """
 
     opts = jigsawpy.jigsaw_jig_t()
@@ -180,13 +184,28 @@ def planarMesh(nds, outfolder, fvtk=None, fumpas=True, voro=True):
     opts.mesh_file = outfolder+'/mesh2D-MESH.msh'
     opts.hfun_file = outfolder+'/mesh2D-HFUN.msh'
 
-    newx = nds.x.values
-    newy = nds.y.values
+    mesh2d_nc = outfolder+'/mesh2D.nc'
+    base2d_nc = outfolder+'/base2D.nc'
+    vtk_out = os.path.join(outfolder, fvtk) if fvtk is not None else None
+
+    if reuse_existing:
+        required_files = [opts.mesh_file]
+        if fumpas:
+            required_files.append(mesh2d_nc)
+        if fumpas and voro:
+            required_files.append(base2d_nc)
+        if vtk_out is not None:
+            required_files.append(vtk_out)
+        if all(os.path.exists(path) for path in required_files):
+            return
+
+    newx = np.ascontiguousarray(nds.x.values, dtype=np.float64)
+    newy = np.ascontiguousarray(nds.y.values, dtype=np.float64)
     hmat = jigsawpy.jigsaw_msh_t()
     hmat.mshID = 'EUCLIDEAN-GRID'
     hmat.xgrid = newx
     hmat.ygrid = newy
-    hmat.value = nds.cellwidth.values
+    hmat.value = np.ascontiguousarray(nds.cellwidth.values, dtype=np.float64)
     jigsawpy.savemsh(opts.hfun_file, hmat)
 
     typeEDGE2 = {'names': ['index', 'IDtag'], 'formats': [('<i4', (2,)), '<i4'], 'offsets': [0, 8], 'itemsize': 12, 'aligned': True}
@@ -217,28 +236,30 @@ def planarMesh(nds, outfolder, fvtk=None, fumpas=True, voro=True):
     opts.hfun_hmin = 0.0
     opts.mesh_dims = +2  # 2-dim. simplexes
     opts.optm_qlim = 0.9375
-    opts.verbosity = +1
+    opts.verbosity = 0
 
     savejig(opts.jcfg_file, opts)
-    check_call(['jigsaw', opts.jcfg_file], logger=None)
+    if not os.path.exists(opts.mesh_file):
+        check_call(['jigsaw', opts.jcfg_file], logger=None)
 
     jigsawpy.loadmsh(opts.mesh_file, geom)
-    if fvtk is not None:
-        jigsawpy.savevtk(outfolder+'/'+fvtk, geom)
+    if fvtk is not None and not os.path.exists(vtk_out):
+        jigsawpy.savevtk(vtk_out, geom)
 
     if fumpas:
-        jigsaw_to_netcdf(msh_filename=opts.mesh_file,
-                         output_name=outfolder+'/mesh2D.nc', on_sphere=False)
-        args = ['MpasMeshConverter.x', outfolder+'/mesh2D.nc', 
-                outfolder+'/base2D.nc']
-        check_call(args=args)
+        if not os.path.exists(mesh2d_nc):
+            jigsaw_to_netcdf(msh_filename=opts.mesh_file,
+                             output_name=mesh2d_nc, on_sphere=False)
+        if not os.path.exists(base2d_nc):
+            args = ['MpasMeshConverter.x', mesh2d_nc, base2d_nc]
+            check_call(args=args)
 
-    if fumpas and voro:
+    if fumpas and voro and not os.path.exists(base2d_nc):
         extract_vtk(
-            filename_pattern=outfolder+'/base2D.nc',
+            filename_pattern=base2d_nc,
             variable_list='areaCell',
             dimension_list=['maxEdges=', 'nVertLevels=', 'nParticles='], 
-            mesh_filename=outfolder+'/base2D.nc',
+            mesh_filename=base2d_nc,
             out_dir=outfolder,
             ignore_time=True,
             lonlat=False,
@@ -289,19 +310,22 @@ def cellWidthVsLatLonFunc_simple(ncgrid):
         longitude in degrees (length m and between -90 and 90)
     """
 
-    ds = ncgrid[['h']]
+    ds = ncgrid[['h']].copy()
     lat = ds.lat.values
     lon = ds.lon.values
-    ds['cellwidth'] = (['lat', 'lon'], 50*np.ones((lat.size, lon.size)))
-    ds['cellwidth'] = ds['cellwidth'].where(ds.h < 0, 10)
-    ds['cellwidth'] = ds['cellwidth'].where((ds.h < -500) | (ds.h >= 0), 15)
-    ds['cellwidth'] = ds['cellwidth'].where((ds.h < -1000) | (ds.h >= -500), 20)
-    ds['cellwidth'] = ds['cellwidth'].where((ds.h < -2000) | (ds.h >= -1000), 25)
-    ds['cellwidth'] = ds['cellwidth'].where((ds.h < -3000) | (ds.h >= -2000), 30)
-    ds['cellwidth'] = ds['cellwidth'].where((ds.h < -5000) | (ds.h >= -3000), 35)
-    ds['cellwidth'] = ds['cellwidth'].where((ds.h < -8000) | (ds.h >= -5000), 40)
-    ds['cellwidth'] = ds['cellwidth'].where((ds.h < -14000) | (ds.h >= -8000), 45)
+    h = ds['h'].values
 
+    cellwidth = np.full(h.shape, 50.0, dtype=np.float32)
+    cellwidth[h >= 0] = 10.0
+    cellwidth[(h < 0) & (h >= -500)] = 15.0
+    cellwidth[(h < -500) & (h >= -1000)] = 20.0
+    cellwidth[(h < -1000) & (h >= -2000)] = 25.0
+    cellwidth[(h < -2000) & (h >= -3000)] = 30.0
+    cellwidth[(h < -3000) & (h >= -5000)] = 35.0
+    cellwidth[(h < -5000) & (h >= -8000)] = 40.0
+    cellwidth[(h < -8000) & (h >= -14000)] = 45.0
+
+    ds['cellwidth'] = (['lat', 'lon'], cellwidth)
     cellWidth = ds['cellwidth'].values
 
     return ds, cellWidth, lon, lat
@@ -321,19 +345,19 @@ def cellWidthVsLatLonFuncPower(ncgrid, width=[10, 50], power=1.2,
         longitude in degrees (length m and between -90 and 90)
     """
 
-    ds = ncgrid[['h']]
+    ds = ncgrid[['h']].copy()
     lat = ds.lat.values
     lon = ds.lon.values
 
     # Normalise
-    val = -ncgrid.h.copy()
-    val = val.where(val > 0, 0)
-    val = val.where(val < maxdepth, maxdepth)
-    val = val/maxdepth
-    # Power fitting
-    xp = np.linspace(0, 1, 100)
-    fpow = interpolate.interp1d(xp, (width[1]-width[0])*xp**power+width[0])
-    interv = fpow(val.values.flatten())
+    val = -np.asarray(ds['h'].values, dtype=np.float64)
+    np.maximum(val, 0.0, out=val)
+    np.minimum(val, maxdepth, out=val)
+    val = val / float(maxdepth)
+
+    xp = np.linspace(0.0, 1.0, 100)
+    fpow = (width[1] - width[0]) * xp**power + width[0]
+    interv = np.interp(val.ravel(), xp, fpow)
     ds['cellwidth'] = (['lat', 'lon'], interv.reshape(val.shape))
     cellWidth = ds['cellwidth'].values
 
@@ -355,13 +379,13 @@ def cellWidthVsLatLonFuncDist(ncgrid, width=[10, 50], maxdist=10000,
     """
 
     # Normalise
-    val = ncgrid.coast.copy()
-    val = val.where(val < maxdist, maxdist)
-    val = val/maxdist
-    # Power fitting
-    xp = np.linspace(0, 1, 100)
-    fpow = interpolate.interp1d(xp, (width[1]-width[0])*xp+width[0])
-    interv = fpow(val.values.flatten())
+    val = np.asarray(ncgrid['coast'].values, dtype=np.float64)
+    np.minimum(val, maxdist, out=val)
+    val = val / float(maxdist)
+
+    xp = np.linspace(0.0, 1.0, 100)
+    fpow = (width[1] - width[0]) * xp + width[0]
+    interv = np.interp(val.ravel(), xp, fpow)
 
     if latlon:
         ncgrid['cellwidth'] = (['lat', 'lon'], interv.reshape(val.shape))
@@ -678,13 +702,18 @@ def globalCoastsTree(coastXYZ, points, seaID, k_neighbors=1):
         Distances from each marine point to the nearest coastline.
     """
 
-    coastDist = np.zeros(len(points))
+    coastDist = np.zeros(len(points), dtype=np.float64)
 
     # Get coastlines points globally
     tree = spatial.cKDTree(coastXYZ, leafsize=10)
-    coastDist[seaID], _ = tree.query(
-        points[seaID, :], k=k_neighbors
-    )
+    try:
+        coastDist[seaID], _ = tree.query(
+            points[seaID, :], k=k_neighbors, workers=-1
+        )
+    except TypeError:
+        coastDist[seaID], _ = tree.query(
+            points[seaID, :], k=k_neighbors
+        )
 
     del tree
     gc.collect()
