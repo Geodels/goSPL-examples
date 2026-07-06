@@ -73,4 +73,5 @@ Local-examples/solute_provenance/sim_solute_provenance
 Global-examples/continental_geochem/silico_geochem
 Global-examples/continental_geochem/flowsed
 Global-examples/continental_geochem/surface*.nc
+Global-examples/continental_geochem/results
 # Global-examples/continental_geochem/geochem_inputs.npz

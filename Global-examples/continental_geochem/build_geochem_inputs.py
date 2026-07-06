@@ -9,9 +9,12 @@ shared continental_flux mesh:
   - `rock`  : integer **climate-zone provinces** (source-rock classes) used both
               for sediment provenance and to set which solute species each region
               yields (via `weatherability_by_class`):
-                0 = tropical humid    (|lat| < 15)  -> iron / ferricrete (laterite)
-                1 = subtropical arid  (15-35)       -> carbonate / calcrete
-                2 = temperate + high  (|lat| >= 35) -> silica / silcrete
+                0 = tropical humid    (|lat| ~< 15) -> iron / ferricrete (laterite)
+                1 = subtropical arid  (~15-35)      -> carbonate / calcrete
+                2 = temperate + high  (|lat| ~>= 35)-> silica / silcrete
+              The belt boundaries are UNDULATED by a smooth 2-D wave (see below), so
+              the species / duricrust edges wander by ~5-10 deg rather than following
+              straight lines of latitude.
 
 Writes `geochem_inputs.npz` (keys `temp`, `rock`) next to this script. Run once
 before the model (the mesh is reused in place from ../continental_flux):
