@@ -42,6 +42,9 @@ Local-examples/escarpment_retreat/escarpment*
 Local-examples/escarpment_retreat/tmp*
 Local-examples/escarpment_retreat/results
 Local-examples/escarpment_retreat/nc-escarpment
+Local-examples/ferricrete_inversion/sim_ferricrete
+Local-examples/groundwater_geochem/results
+Local-examples/groundwater_geochem/sim_gw_geochem
 
 # Global examples
 Global-examples/plate_mvt/input_30
@@ -65,3 +68,9 @@ Global-examples/continental_flux/results*
 Global-examples/continental_flux/export*
 Global-examples/continental_flux/flowsed
 Global-examples/continental_flux/cellWidth*
+Local-examples/groundwater_geochem/sim_gw_geochem
+Local-examples/solute_provenance/sim_solute_provenance
+Global-examples/continental_geochem/silico_geochem
+Global-examples/continental_geochem/flowsed
+Global-examples/continental_geochem/surface*.nc
+# Global-examples/continental_geochem/geochem_inputs.npz

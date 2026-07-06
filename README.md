@@ -188,6 +188,7 @@ Mesh-building helpers shared across examples live in [`shared_scripts/umeshFcts.
 | [`continental_flux`](Global-examples/continental_flux) | Global continental erosion–deposition and sediment flux to the oceans over 1 Myr on a coastline-refined mesh. |
 | [`erodep_1My`](Global-examples/erodep_1My) | Global 1 Myr run coupling stream-power erosion, marine deposition and flexural isostasy. |
 | [`plate_mvt`](Global-examples/plate_mvt) | Global landscape evolution driven by horizontal plate motion (advection) together with vertical tectonics. |
+| [`continental_geochem`](Global-examples/continental_geochem) | Global climate-zoned solute geochemistry: latitudinal provinces each shed a characteristic species (tropical iron/ferricrete, subtropical-arid carbonate/calcrete, temperate silica/silcrete) under temperature-driven (Arrhenius) weathering, with a capillary-fringe duricrust and per-basin / per-species dissolved-load delivery to the ocean. |
 
 ### Local examples
 
@@ -201,6 +202,8 @@ Mesh-building helpers shared across examples live in [`shared_scripts/umeshFcts.
 | [`soil_generation`](Local-examples/soil_generation) | Soil production from bedrock weathering coupled with river transport and hillslope diffusion. |
 | [`stratigraphic_record`](Local-examples/stratigraphic_record) | Building a passive-margin model that records stratigraphy, then extracting stratal architecture and a Wheeler (chronostratigraphic) chart. |
 | [`dual_lithology`](Local-examples/dual_lithology) | Dual-lithology (coarse/fine) erosion–deposition with sediment-provenance tracking — attributes deposited sediment back to its source region. |
+| [`groundwater_geochem`](Local-examples/groundwater_geochem) | Water table + capillary-fringe duricrust (erodibility armoring) + Level-B conservative solute geochemistry (two tracers: dissolution → transport → precipitation → river/ocean export). |
+| [`ferricrete_inversion`](Local-examples/ferricrete_inversion) | Two-stage tropical laterite relief inversion: an iron ferricrete grows in wet river valleys (water table + capillary-fringe duricrust), then base-level fall dissects the landscape and the armoured valley floors are left standing as ferricrete-capped mesas. |
 
 ## Running goSPL-examples
 

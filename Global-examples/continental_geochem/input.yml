@@ -1,0 +1,113 @@
+name: Global regional geochemistry — climate-zoned solute species, temperature-driven weathering (1 Myr)
+
+# A "standard application" of the Level-B geochemistry at global scale: the
+# continents are divided into climate-zone PROVINCES (tropical / subtropical /
+# temperate) that each shed a characteristic solute species, weathering is driven
+# by a latitudinal + altitude TEMPERATURE map (Arrhenius, via the soil model), the
+# dissolved load is routed down the rivers to the ocean, and the duricrust forms
+# where the water table sits at the capillary fringe. Reuses the continental_flux
+# global mesh + rainfall in place; the province + temperature maps come from
+# `geochem_inputs.npz` (run `build_geochem_inputs.py` first).
+
+domain:
+    npdata: ['../continental_flux/vars_25_80/mesh','v','c','z']   # reuse the sibling global mesh
+    flowdir: 2
+    seadepo: True
+
+time:
+    start: 250.e6
+    end: 251.e6               # 1 Myr
+    tout: 1.e5                # 10 outputs
+    dt: 5.e4
+    strat: 1.e5               # per-layer crust type / source + provenance archive
+
+spl:
+    K: 5.e-6
+    d: 0.42
+    m: 0.5
+
+diffusion:
+    hillslopeKa: 0.5
+    hillslopeKm: 2.0
+    nonlinKm: 5.e4
+    Gmar: 1.0
+    clinSlp: 1.e-5
+    marineSolver: picard      # stable marine/lake sub-stepper (default 'ts' thrashes here)
+    picardSub: 10
+    picardIts: 2
+    nlPitK: 5.e3
+    pitInletBias: 0.4
+
+# Soil / regolith with a temperature-dependent production rate — supplies the
+# `tempMap` used by the Arrhenius weathering and feeds the `prodsoil` duricrust
+# supply (chemical weathering ∝ physical regolith production).
+soil:
+    mode: 'regolith'
+    soilK: 8.e-6
+    solver: 'ngmres'          # robust soil solver (qn default stalls on the armored K)
+    pcType: 'hypre'
+    rtol: 1.e-5
+    atol: 1.e-5
+    maxProd: 30.e-6           # max regolith production (m/yr)
+    depthProd: 1.0            # production decay depth (m)
+    uniform: 0.5              # initial regolith thickness (m)
+    tempMap: ['geochem_inputs', 'temp']   # latitudinal + altitude temperature (degC)
+    activation: 40.e3         # Arrhenius activation energy (J/mol) -> warm = faster
+    tempRef: 15.0             # reference temperature (degC)
+
+# Sediment provenance = the climate-zone rock provinces; also the lithology label
+# that decides which species each region yields (geochem below).
+provenance:
+    classes: 3
+    source: ['geochem_inputs', 'rock']    # 0 tropical | 1 subtropical | 2 temperate
+
+sea:
+    position: 0.
+
+climate:
+  - start: 250.e6
+    map: ['../continental_flux/vars_25_80/rain250','r']   # per-vertex rainfall (m/yr)
+
+# ---------------------------------------------------------------------------
+# Water table + duricrust + regional conservative geochemistry
+# ---------------------------------------------------------------------------
+groundwater:
+    Ksat: 3.65e4              # saturated hydraulic conductivity (m/yr)
+    specific_yield: 0.1
+    # THICKNESS-based aquifer base: a uniform unconfined-zone depth below the
+    # surface (a per-vertex map ['file','key'] also works — e.g. a regolith /
+    # weathering-front thickness). NOT `from_soil`, so the water table is a
+    # regional feature, not tied to the thin weathering layer.
+    aquifer_base: 50.0
+    # ARID recharge (0.5% of rainfall): enough to keep the water table BELOW the
+    # surface (median ~8 m) so a capillary-fringe zone develops and the duricrust
+    # is geomorphically localized (shallow-water-table lowlands / margins) rather
+    # than blanketing the continents. A wetter value floods the aquifer to the
+    # surface; see the README note on the recharge control.
+    infiltration: 0.005       # fraction of (rain - evap) recharging the aquifer
+    conserve_baseflow: True
+
+    duricrust:
+        form_rate: 1.0e-4
+        max_thickness: 5.0
+        fringe_depth: 3.0     # capillary-fringe centre below the surface (m)
+        fringe_width: 2.0
+        armor_max: 0.9
+        weathering:
+            mode: prodsoil    # supply follows the temperature-dependent regolith production
+
+    geochem:
+        conserve: True
+        river_load: True
+        marine_coupling: True
+        # Each climate-zone province sheds its characteristic species — the
+        # per-(province, species) weatherability table gathered by the provenance
+        # class. Columns = [tropical, subtropical, temperate].
+        weatherability_from: source_class
+        species:
+          - {name: iron,      weatherability_by_class: [1.0, 0.1, 0.0], precip_rate: 1.0}
+          - {name: carbonate, weatherability_by_class: [0.0, 1.0, 0.2], precip_rate: 1.0}
+          - {name: silica,    weatherability_by_class: [0.1, 0.2, 1.0], precip_rate: 0.8}
+
+output:
+    dir: 'silico_geochem'

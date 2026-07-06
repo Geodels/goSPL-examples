@@ -1,0 +1,88 @@
+name: Groundwater, duricrust & conservative solute geochemistry (local)
+
+# Derived from ../soil_generation (same flat mesh + soil/regolith). It adds the
+# opt-in `groundwater:` block — a water table, a capillary-fringe duricrust that
+# armors erodibility, and Level-B conservative solute geochemistry with two
+# tracers routed down the rivers to the sea. Everything below `groundwater:` is
+# the new capability; the rest is the soil-erosion base.
+
+domain:
+    npdata: ['data/gospl_mesh','v','c','z']   # initial mesh: path, vertices, cells, elevation (.npz)
+    flowdir: 5                # flow-direction method; 1 (SFD) to 6 (MFD)
+    bc: 'oooo'                # boundary conditions N,E,S,W; o=open f=fixed w=wall
+
+time:
+    start: 0.                 # model start time (years)
+    end: 1.e5                 # model end time (years)
+    tout: 1.e4                # output interval (years)
+    dt: 5.e3                  # internal time step (years)
+    strat: 5.e3               # stratigraphic-record interval -> per-layer duricrust archive
+
+spl:
+    K: 4.e-6                  # stream-power erodibility
+    d: 0.
+    m: 0.5
+    G: 0.
+
+soil:
+    soilK: 8.e-6
+    solver: 'ngmres'          # robust non-linear soil solver (qn default can stall
+    pcType: 'hypre'           #   on the armored, spatially-variable K here)
+    rtol: 1.e-5
+    atol: 1.e-5
+    maxProd: 50.e-6           # maximum soil production rate (m/yr)
+    depthProd: 1.0            # soil production decay depth (m)
+    roughnessL: 1.0
+    decayDepth: 0.7           # soil transport decay depth (m), non-linear diffusion
+    bedrockConv: 1.e-8
+    uniform: 0.5              # uniform initial soil thickness (m)
+
+diffusion:
+    hillslopeKa: 1.0          # aerial linear hillslope diffusivity (m^2/yr)
+    hillslopeKm: 2.0          # marine linear hillslope diffusivity (m^2/yr)
+
+sea:
+    position: 0.
+
+climate:
+  - start: 0.
+    uniform: 1.0              # uniform rainfall (m/yr)
+
+# ---------------------------------------------------------------------------
+# Water table + duricrust + conservative geochemistry (the illustrated feature)
+# ---------------------------------------------------------------------------
+groundwater:
+    Ksat: 3.65e4              # saturated hydraulic conductivity K_h (m/yr) ~ 1e-3 m/s (sand/gravel)
+    specific_yield: 0.1       # drainable porosity S (0.01 clay .. 0.3 sand)
+    # aquifer_base: from_soil   # tie the impermeable base to the bedrock elevation (needs soil)
+    aquifer_base: 100         
+    bedrock_depth: 5.0        # permeable weathered rock below the bedrock top (m)
+    min_sat_thickness: 1.0    # floor on saturated thickness (keeps transmissivity > 0)
+    infiltration: 0.3         # fraction of (rain - evap) that recharges the aquifer
+    conserve_baseflow: True   # re-inject seepage as river baseflow (writes `baseflow`)
+
+    duricrust:
+        form_rate: 1.0e-4     # crust formation rate k_form (m/yr) at full favourability
+        max_thickness: 5.0    # duriH_max (m); induration degree duriF = duriH / max_thickness
+        fringe_depth: 3.0     # capillary-fringe centre below the surface (m)
+        fringe_width: 2.0     # Gaussian half-width of the fringe band (m)
+        armor_max: 0.9        # max erodibility reduction: duriF=1 -> K*(1-0.9) = 10x harder
+        weathering:
+            mode: prodsoil    # solute supply follows the soil production rate (chemical ~ physical)
+
+    geochem:
+        conserve: True        # keep + report the closed budget (dissolved = precipitated + exported)
+        river_load: True      # route the exported solute down the rivers to the coast
+        marine_coupling: True # accumulate the delivered coastal flux (per species) + marineSoluteInput
+        species:
+          - name: carbonate    # relative, dimensionless tuning knobs (ratios matter)
+            weatherability: 1.0    # dissolution rate
+            precip_rate: 1.0       # fringe-precipitation efficiency
+            solid_volume: 1.0      # crust volume per unit precipitated solute
+          - name: silica
+            weatherability: 0.5
+            precip_rate: 0.8
+            river_decay: 0.3       # first-order in-transit river loss (in-channel uptake)
+
+output:
+    dir: 'sim_gw_geochem'     # output directory name
