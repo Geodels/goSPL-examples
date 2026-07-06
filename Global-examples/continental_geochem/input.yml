@@ -29,8 +29,8 @@ spl:
 diffusion:
     hillslopeKa: 0.5
     hillslopeKm: 2.0
-    nonlinKm: 5.e4
-    Gmar: 1.0
+    nonlinKm: 1.e4            # gentler marine deposition (as in erodep_1My): avoids the
+    Gmar: 0.5                 # spiky ocean fill that otherwise destabilises the soil solver
     clinSlp: 1.e-5
     marineSolver: picard      # stable marine/lake sub-stepper (default 'ts' thrashes here)
     picardSub: 10

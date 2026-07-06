@@ -9,15 +9,17 @@ duricrust forms where the water table sits at fringe depth, and the dissolved lo
 routed down the rivers to the ocean. PyGMT draws a 2 x 2 grid of global maps after
 1 Myr (Winkel Tripel; black lines are the 0 m palaeo-shoreline):
   (a) the temperature field that drives the weathering (the Arrhenius forcing);
-  (b) the dominant duricrust species (iron / carbonate / silica), the climate-zoned
-      geochemistry expressed in the crust;
-  (c) the capillary-fringe duricrust thickness;
+  (b) the capillary-fringe duricrust thickness;
+  (c) the per-node dissolved-solute export flux (weathering solute discharged to the
+      surface drainage network before routing);
   (d) the river dissolved-solute load delivered toward the coasts;
   (e) the domain-integrated per-species solute budget through time (mass exported to
       the ocean, solid, vs locked in the duricrust, dashed).
 Gridded field from results/surface10.nc (gospl-grid); the temperature forcing is the
 per-vertex geochem_inputs.npz:temp mapped onto the same grid; the budget from
 silico_geochem/gw_solute_budget.csv.
+Generate the grid at final step by running:
+gospl-grid --h5dir silico_geochem/h5 --mesh ../continental_flux/vars_25_80/mesh.npz:v:c --step 10 --spacing 0.1 --out results/surface10.nc
 """
 import os
 import numpy as np
@@ -38,16 +40,10 @@ bud = np.genfromtxt(os.path.join(EX, "silico_geochem/gw_solute_budget.csv"),
                     delimiter=",", names=True)
 tb = (bud["time"] - bud["time"][0]) / 1.0e6                    # Myr since start
 
-# Dominant duricrust species per cell (0 iron, 1 carbonate, 2 silica), where a crust
-# actually exists (total thickness > 0.1 m); elsewhere masked out.
-ci, cc, cs = (np.nan_to_num(ds[k].values) for k in ("crust_iron", "crust_carbonate", "crust_silica"))
-tot = ci + cc + cs
-dom = np.argmax(np.stack([ci, cc, cs]), axis=0).astype(float)
-dom[tot < 0.1] = np.nan
-dom = xr.DataArray(dom, coords=[ds.lat, ds.lon], dims=["lat", "lon"])
-
-# Duricrust thickness and river dissolved-solute load (log10), land only.
+# Duricrust thickness (land only), the per-node dissolved-solute EXPORT flux and the
+# routed river dissolved-solute LOAD (both log10, land only).
 duri = ds.duricrust.where(ds.duricrust > 0.05).where(land)
+sf = np.log10(ds.soluteflux.where(ds.soluteflux > 1.0).where(land))
 rs = np.log10(ds.riverSolute.where(ds.riverSolute > 1.0e4))
 
 # Temperature forcing: per-vertex geochem_inputs.npz:temp mapped onto the grid.
@@ -59,11 +55,6 @@ temp = np.load(os.path.join(EX, "geochem_inputs.npz"))["temp"]
 LON, LAT = np.meshgrid(ds.lon.values, ds.lat.values)
 tg = griddata((mlon, mlat), temp, (LON, LAT), method="nearest")
 tempda = xr.DataArray(np.where(land.values, tg, np.nan), coords=[ds.lat, ds.lon], dims=["lat", "lon"])
-
-# Categorical CPT for the dominant-species panel (keys 0/1/2 -> labelled colours).
-SPCPT = "/tmp/species_geochem.cpt"
-with open(SPCPT, "w") as f:
-    f.write("0\t192/57/43\t;iron\n1\t46/109/164\t;carbonate\n2\t90/143/60\t;silica\n")
 
 PROJ, REG = "W8c", "d"
 DX, DY = "9.4c", "-5.6c"
@@ -96,22 +87,24 @@ fig.grdimage(tempda, cmap=True, nan_transparent=True); coast()
 with pygmt.config(**CB_FONT):
     fig.colorbar(position=CBP, frame=["a10", "x+lTemperature (@.C)"])
 
-# --- (b) dominant duricrust species (top-right) ----------------------------
+# --- (b) duricrust thickness (top-right) -----------------------------------
 fig.shift_origin(xshift=DX)
-map_frame("+t(b) dominant duricrust species")
-graybg()
-fig.grdimage(dom, cmap=SPCPT, nan_transparent=True); coast()
-with pygmt.config(**CB_FONT):
-    fig.colorbar(cmap=SPCPT, position=CBP)
-
-# --- (c) duricrust thickness (bottom-left) ---------------------------------
-fig.shift_origin(xshift="-" + DX, yshift=DY)
-map_frame("+t(c) duricrust thickness")
+map_frame("+t(b) duricrust thickness")
 graybg()
 pygmt.makecpt(cmap="lajolla", series=[0, 5])
 fig.grdimage(duri, cmap=True, nan_transparent=True); coast()
 with pygmt.config(**CB_FONT):
     fig.colorbar(position=CBP, frame=["a1", "x+lDuricrust thickness (m)"])
+
+# --- (c) dissolved-solute export flux (bottom-left) ------------------------
+fig.shift_origin(xshift="-" + DX, yshift=DY)
+map_frame("+t(c) dissolved-solute export flux")
+graybg()
+pygmt.makecpt(cmap="batlow", series=[float(np.nanpercentile(sf.values, 2)),
+                                     float(np.nanpercentile(sf.values, 99.5))])
+fig.grdimage(sf, cmap=True, nan_transparent=True); coast()
+with pygmt.config(**CB_FONT):
+    fig.colorbar(position=CBP, frame="x+lSolute export (log@-10@- m@+3@+ yr@+-1@+)")
 
 # --- (d) river dissolved-solute load (bottom-right) ------------------------
 fig.shift_origin(xshift=DX)
@@ -128,7 +121,7 @@ SPP = [("iron", "#c0392b"), ("carbonate", "#2e6da4"), ("silica", "#5a8f3c")]
 fig.shift_origin(xshift="-8.55c", yshift="-6c")
 with pygmt.config(FONT_ANNOT_PRIMARY="6p,Helvetica,black", FONT_LABEL="7p,Helvetica,black",
                   FONT_TITLE="8p,Helvetica", MAP_TITLE_OFFSET="2p"):
-    fig.basemap(region=[0, 1, 1e13, 3e17], projection="X16.5c/4.2cl",
+    fig.basemap(region=[0.1, 1, 8e12, 2e15], projection="X16.5c/4.2cl",
                 frame=["WSne+t(e) per-species solute budget (exported solid, in crust dashed)",
                        "xa0.2f0.1+lTime (Myr)", "ya1f3+lcumulative solute (m@+3@+)"])
     for sp, col in SPP:
@@ -140,6 +133,5 @@ with pygmt.config(FONT_ANNOT_PRIMARY="6p,Helvetica,black", FONT_LABEL="7p,Helvet
 
 fig.savefig("fig_ex_globalgeochem.pdf")
 fig.savefig("fig_ex_globalgeochem.png", dpi=200)
-nsp = {int(k): int(v) for k, v in zip(*np.unique(dom.values[np.isfinite(dom.values)], return_counts=True))}
 print(f"wrote fig_ex_globalgeochem.pdf / .png | temp {np.nanmin(tempda.values):.0f}..{np.nanmax(tempda.values):.0f} C | "
-      f"dominant-species cells {nsp} | duri<= {float(ds.duricrust.max()):.1f} m")
+      f"duri<= {float(ds.duricrust.max()):.1f} m | soluteflux max {float(np.nanmax(ds.soluteflux)):.2g} m3/yr")
