@@ -203,7 +203,8 @@ Mesh-building helpers shared across examples live in [`shared_scripts/umeshFcts.
 | [`stratigraphic_record`](Local-examples/stratigraphic_record) | Building a passive-margin model that records stratigraphy, then extracting stratal architecture and a Wheeler (chronostratigraphic) chart. |
 | [`dual_lithology`](Local-examples/dual_lithology) | Dual-lithology (coarse/fine) erosion–deposition with sediment-provenance tracking — attributes deposited sediment back to its source region. |
 | [`groundwater_geochem`](Local-examples/groundwater_geochem) | Water table + capillary-fringe duricrust (erodibility armoring) + Level-B conservative solute geochemistry (two tracers: dissolution → transport → precipitation → river/ocean export). |
-| [`ferricrete_inversion`](Local-examples/ferricrete_inversion) | Two-stage tropical laterite relief inversion: an iron ferricrete grows in wet river valleys (water table + capillary-fringe duricrust), then base-level fall dissects the landscape and the armoured valley floors are left standing as ferricrete-capped mesas. |
+| [`ferricrete_inversion`](Local-examples/ferricrete_inversion) | Two-stage tropical laterite relief inversion: a broad iron ferricrete cuirasse blankets a wet plain (water table + capillary-fringe duricrust, *relative accumulation*), then base-level fall dissects it and the armoured divides are left standing as ferricrete-capped mesas (relief grows ~30 → ~640 m). |
+| [`valley_ferricrete`](Local-examples/valley_ferricrete) | Absolute-accumulation valley ferricrete: the `discharge_gate` confines the crust to groundwater discharge zones (valley floors, footslopes) so it tracks the drainage network instead of blanketing the plain, while the un-precipitated dissolved iron is exported down the rivers — the lateral-accumulation counterpart to `ferricrete_inversion`. |
 
 ## Running goSPL-examples
 

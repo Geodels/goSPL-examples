@@ -1,0 +1,85 @@
+name: Valley ferricrete (absolute accumulation) & dissolved-iron export (local)
+
+# The SAME low-relief plain and river valleys as ferricrete_inversion
+# (inputs/gospl_mesh_valleys.npz), but here the iron ferricrete forms by
+# ABSOLUTE ACCUMULATION: dissolved iron is carried laterally by the groundwater
+# flux and re-precipitates only where that flow CONVERGES and DISCHARGES -- the
+# valley floors, footslopes and seepage faces. The `discharge_gate` confines the
+# crust to the drainage network (valley / "bas-fond" ferricrete) instead of
+# blanketing the plain, and the un-precipitated iron is exported down the rivers
+# (soluteflux / riverSolute). This is the lateral-accumulation counterpart to the
+# in-situ plateau cuirasse dissected in the ferricrete_inversion example.
+# Build the mesh first:  python build_inputs.py
+
+domain:
+    npdata: ['inputs/gospl_mesh_valleys','v','c','z']   # v, c, z (+ t1/t2 uplift)
+    flowdir: 5                # multiple-flow-direction routing
+    bc: 'owow'                # NESW: E/W walls (edges are ridge divides); N/S drain south
+
+time:
+    start: 0.
+    end: 1.5e7                # 15 Myr
+    tout: 2.5e5               # 60 outputs
+    dt: 2.e4
+    strat: 2.5e5
+
+spl:
+    K: 5.5e-6
+    d: 0.
+    m: 0.5
+
+diffusion:
+    hillslopeKa: 0.06
+    hillslopeKm: 0.05
+
+sea:
+    position: -1000.          # continental upland: everything is subaerial
+
+climate:
+  - start: 0.
+    uniform: 2.5              # wet tropical: strong weathering feeds the dissolved iron
+  - start: 5.e6
+    uniform: 1.2              # drier: the wet-phase iron pulse tapers off
+
+tectonics:
+  - start: 0.
+    end: 5.e6
+    upsub: ['inputs/gospl_mesh_valleys','t1']
+  - start: 5.e6
+    end: 1.e8
+    upsub: ['inputs/gospl_mesh_valleys','t2']
+
+# ---------------------------------------------------------------------------
+# Water table + capillary-fringe iron duricrust + conservative iron geochemistry,
+# with the ABSOLUTE-ACCUMULATION discharge gate ON.
+# ---------------------------------------------------------------------------
+groundwater:
+    Ksat: 1.0e6               # aquifer transmissivity (drains the ridges)
+    specific_yield: 0.1
+    aquifer_base: 30.0
+    infiltration: 0.1
+    conserve_baseflow: True
+
+    duricrust:
+        form_rate: 5.0e-5
+        max_thickness: 20.0
+        fringe_depth: 0.5     # tight to the shallow valley-floor water table
+        fringe_width: 0.75
+        discharge_gate: True  # ABSOLUTE ACCUMULATION: crust only where groundwater
+                              # converges/discharges (valleys/footslopes), not the plain
+        armor_max: 0.98
+        decay_rate: 1.0e-9
+        weathering:
+            mode: proxy
+
+    geochem:
+        conserve: True
+        river_load: True      # export the un-precipitated dissolved iron down the rivers
+        species:
+          # finite source_pool: the wet phase dissolves a bounded iron reservoir, so the
+          # dissolved-iron cycle is a wet-phase PULSE (the crust then goes relict) --
+          # raise it to keep weathering rate-limited over the whole run instead
+          - {name: iron, weatherability: 1.0, precip_rate: 2.0e-4, solid_volume: 1.0, source_pool: 5.0e6}
+
+output:
+    dir: 'sim_valley_ferricrete'

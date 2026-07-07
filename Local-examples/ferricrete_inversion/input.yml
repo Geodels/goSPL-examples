@@ -1,28 +1,29 @@
-name: Tropical ferricrete & relief inversion (local)
+name: Ferricrete cuirasse dissection & relief inversion (local)
 
-# A simple, controlled tropical landscape: parallel river valleys separated by highland
-# ridges (inputs/gospl_mesh_valleys.npz), gently uplifted so the rivers stay active.
-# An IRON ferricrete forms ONLY in the wet river valleys -- the water table sits near
-# the surface in the valley floors and deep under the ridges, so the capillary fringe
-# indurates the valley ground. Because the crust ARMOURS the erodibility, the armoured
-# valleys keep pace with the gentle uplift while the un-armoured ridges are worn down,
-# and the RELIEF INVERTS: the former valleys stand up as ferricrete-capped mesas.
+# A simple, controlled tropical landscape: a low-relief plain crossed by broad
+# river valleys (inputs/gospl_mesh_valleys.npz), gently uplifted so the rivers
+# stay active. In the WET stage an IRON ferricrete indurates the near-surface
+# ground as a broad, resistant CUIRASSE (a laterite sheet). Because the crust
+# ARMOURS the erodibility, when base-level fall dissects the plain the rivers
+# strip the soft saprolite from the incising valleys while the ferricrete-capped
+# divides resist: the armoured old land surface is left standing as flat-topped
+# ferricrete-capped MESAS, and the relief inverts (~30 m -> ~600 m).
 # Build the mesh first:  python build_inputs.py
 
 domain:
-    npdata: ['inputs/gospl_mesh_valleys','v','c','z']   # v, c, z (+ t = uniform uplift)
+    npdata: ['inputs/gospl_mesh_valleys','v','c','z']   # v, c, z (+ t1/t2 uplift)
     flowdir: 5                # multiple-flow-direction routing
     bc: 'owow'                # NESW: E/W walls (edges are ridge divides -> no side leakage); N/S drain south
 
 time:
     start: 0.
     end: 1.5e7                # 15 Myr: 5 Myr crust growth + 10 Myr dissection to mesas
-    tout: 2.5e5               # 60 outputs (2.5 Myr = step 10, 5/10/15 Myr = steps 20/40/60)
+    tout: 2.5e5               # 60 outputs (2.5 Myr = step 10; 5/10/15 Myr = steps 20/40/60)
     dt: 2.e4                  # internal step (gentle rates tolerate a large step)
-    strat: 2.5e5               # stratigraphy on -> archive/re-arm the valley ferricrete
+    strat: 2.5e5              # stratigraphy on -> archive/re-arm the ferricrete cuirasse
 
 spl:
-    K: 5.5e-6                  # soft saprolite substrate; the ferricrete armours it ~20x
+    K: 5.5e-6                 # soft saprolite substrate; the ferricrete armours it ~20x
     d: 0.
     m: 0.5
 
@@ -33,12 +34,11 @@ diffusion:
 sea:
     position: -1000.          # continental upland: everything is subaerial
 
-# Evolving climate: a WET tropical phase grows the ferricrete in the valleys, then a
-# DRIER phase leaves it relict (stops forming, decays only slowly) while the ridges are
-# worn down and the relief inverts.
+# Evolving climate: a WET tropical phase grows the ferricrete, then a DRIER phase
+# leaves it relict (decays only slowly) while base-level fall dissects the plain.
 climate:
   - start: 0.
-    uniform: 2.5              # STAGE 1 wet tropical: grows the broad valley-floor ferricrete
+    uniform: 2.5              # STAGE 1 wet tropical: grows the broad ferricrete cuirasse
   - start: 5.e6
     uniform: 1.2              # STAGE 2 drier: crust goes relict as the dissection begins
 
@@ -54,13 +54,12 @@ tectonics:
 # Water table + capillary-fringe iron duricrust + conservative iron geochemistry
 # ---------------------------------------------------------------------------
 groundwater:
-    Ksat: 1.0e4               # aquifer transmissivity
+    Ksat: 1.0e6               # aquifer transmissivity
     specific_yield: 0.1
     aquifer_base: 30.0        # unconfined-zone depth below the surface (m)
-    # Recharge chosen so the water table is SHALLOW in the valley floors (wtdepth ~ 0,
-    # where the fringe crust forms) and DEEP under the ridge crests -- the valley-shallow
-    # / ridge-deep structure that localises the ferricrete in the river valleys.
-    infiltration: 0.3
+    infiltration: 0.1         # recharge keeps the water table near the surface across the
+                              # wet plain, so the capillary-fringe crust indurates it broadly
+                              # (the plateau / "bowal" cuirasse -- relative accumulation)
     conserve_baseflow: True
 
     duricrust:
@@ -68,7 +67,12 @@ groundwater:
         max_thickness: 20.0   # duriH_max (m): a thick sheet to survive dissection
         fringe_depth: 2.0     # capillary fringe -> crust where the table is near surface
         fringe_width: 2.0
+        # discharge_gate OFF (default): the crust blankets the wet plain (in-situ,
+        # relative-accumulation cuirasse) rather than tracking the valleys -- this is
+        # the sheet that dissection later carves into capped mesas. (The opt-in
+        # absolute-accumulation valley crust is the separate valley_ferricrete example.)
         armor_max: 0.98       # very strong ferricrete armour (~33x harder to erode)
+        armor_diffusion: True # armour hillslope creep too -> caps survive as sharp mesas
         decay_rate: 1.0e-9    # very slow dissolution -> the relict cap persists as it inverts
         weathering:
             mode: proxy       # climate-proxy weathering supply (no soil tracked)
@@ -77,7 +81,9 @@ groundwater:
         conserve: True
         river_load: True      # route the dissolved iron down the rivers
         species:
-          - {name: iron, weatherability: 1.0, precip_rate: 2.0e-4, solid_volume: 1.0}
+          # large source_pool: weathering stays rate-limited over the full 15 Myr so
+          # the dissolved-iron cycle stays active (not a ~1 Myr pulse that then empties)
+          - {name: iron, weatherability: 1.0, precip_rate: 2.0e-4, solid_volume: 1.0, source_pool: 1.0e9}
 
 output:
     dir: 'sim_ferricrete'

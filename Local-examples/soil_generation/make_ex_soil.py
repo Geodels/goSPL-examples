@@ -18,7 +18,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 from gospl.analyse.gridexport import grid_export, basin_rivers
 
 EX = os.path.dirname(os.path.abspath(__file__))
-STEP, RESO, BID = 10, 250, 1179
+STEP, RESO, BID = 10, 250, 1182
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 g = grid_export(os.path.join(EX, "sim_river_soil/h5"), os.path.join(EX, "data/gospl_mesh.npz"),

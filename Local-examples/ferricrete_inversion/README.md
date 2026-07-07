@@ -1,4 +1,4 @@
-# Tropical ferricrete & relief inversion (local)
+# Ferricrete cuirasse dissection & relief inversion (local)
 
 A local example of goSPL's **water table**, **capillary-fringe iron duricrust
 (ferricrete)** and **conservative solute geochemistry** that reproduces the textbook
@@ -18,27 +18,37 @@ Output goes to `sim_ferricrete/`.
 
 ## The two-stage story
 
-- **Stage 1 — ferricrete forms in the wet valleys (0–5 Myr, wet, tectonically quiet).**
-  The `tectonics` `t1` phase applies only a whisper of uplift, so the plain stays low.
-  The water table sits **near the surface in the wet valley floors and deep under the
-  rises**, so the capillary-fringe iron duricrust indurates the **valley ground as a
-  broad, resistant sheet** and *not* the drier rises between the valleys
-  (`duricrust`, `induration`, `Karmor`). This is the valley-shallow / ridge-deep
-  water-table structure that localises ferricrete in river valleys.
+- **Stage 1 — a ferricrete cuirasse blankets the wet plain (0–5 Myr, wet, tectonically
+  quiet).** The `tectonics` `t1` phase applies only a whisper of uplift, so the plain
+  stays low and wet. The water table sits **near the surface across the plain**, so the
+  capillary-fringe iron duricrust indurates the near-surface ground as a **broad,
+  resistant sheet** (`duricrust`, `induration`, `Karmor`). This is the *in-situ /
+  relative-accumulation* style of laterite — the plateau ("bowal") cuirasse that
+  genuinely blankets flat, low-relief laterite uplands.
 
 - **Stage 2 — dissection inverts the relief (5–15 Myr, drier, base-level fall).**
   The `tectonics` `t2` phase uplifts the interior against the fixed southern outlet, so
-  the rivers incise. Where incision **breaches the ferricrete it cuts quickly into the
-  soft saprolite beneath** (the ferricrete armours the bedrock erodibility, `armor_max`)
-  and carves new valleys, while the **ferricrete-capped ground resists and is left
-  standing as ferricrete-capped mesas**. The former valley floors become the highs: a
-  relief inversion.
+  the rivers incise. Where incision **breaches the cuirasse it cuts quickly into the soft
+  saprolite beneath** (the ferricrete armours the bedrock erodibility, `armor_max`, and
+  the hillslope creep, `armor_diffusion`) and carves deep valleys, while the
+  **ferricrete-capped divides resist and are left standing as flat-topped mesas**. The
+  armoured old land surface becomes the high ground: a relief inversion.
 
-In the run the initial valley floors erode only about **a third as fast as the bare
-rises** while the crust armours them (a valley-to-ridge erosion ratio near 0.3), the
-relief grows from a few tens of metres to **over 500 m**, and the ferricrete that formed
-in the lows ends up on the **highest ground** (its mean elevation percentile climbs from
-~50 to ~77 %).
+In the run the crust blankets the plain by the end of Stage 1, then Stage 2 strips it
+from the incising valleys and preserves it on the divides: the relief grows from a few
+tens of metres to **~640 m**, and the surviving ferricrete ends up firmly on the
+**highest ground** (the crust–elevation correlation climbs to ~+0.7, with the capped
+mesas ~20 m thick standing over deeply stripped valleys).
+
+> **Two ferricrete styles, two examples.** This example is the *in-situ* cuirasse that
+> blankets the plain and dissects into mesas. Its lateral counterpart —
+> **absolute-accumulation valley ferricrete**, where dissolved iron is carried
+> downslope and precipitates only in the groundwater discharge zones (valley floors,
+> footslopes) via the `discharge_gate` — is the sister
+> [`valley_ferricrete`](../valley_ferricrete) example. A rate-only armour model cannot
+> stand a *valley-fill* cap up into a ridge (the crust adds no elevation), so relief
+> inversion here is the dissected-cuirasse → capped-mesa pathway, where the crust starts
+> on the ground that becomes the high divides.
 
 ## Why the boundary matters
 
@@ -57,10 +67,11 @@ a fixed base level while the interior is uplifted — this keeps the landscape i
 ## What it illustrates
 
 - **Water table** that seeps at the channels (`wtdepth ≈ 0`, feeding `baseflow`) and
-  drops away under the interfluves — the gradient the capillary-fringe crust needs.
+  drops away under the interfluves.
 - **Capillary-fringe iron duricrust** that grows where the water table is shallow, is
   archived per stratigraphic layer (`stratDuri`/`induration`) and re-arms on exhumation,
-  and **armours the bedrock erodibility** (`Karmor`) to drive the inversion.
+  and **armours the bedrock erodibility** (`Karmor`) — and, with `armor_diffusion`, the
+  hillslope creep — to drive the inversion.
 - **Iron geochemistry**: a single conservative `iron` tracer is dissolved, advected in
   the groundwater, precipitated in the fringe (feeding the crust) and its seepage export
   routed down the rivers (`river_load`).
@@ -76,10 +87,10 @@ for s in $(seq 0 60); do
 done
 ```
 
-The inversion is clearest as `duricrust` through time (a broad valley-floor sheet early,
-then caps on the dissected interfluves) alongside `elev` and `erodep` (the deepening,
-un-armoured valleys). Open `sim_ferricrete/*.xdmf` in ParaView and colour by `duricrust`,
-`Karmor`, `elev` or `wtdepth`.
+The inversion is clearest as `duricrust` through time (a broad sheet early, then caps on
+the dissected interfluves) alongside `elev` and `erodep` (the deepening, un-armoured
+valleys). Open `sim_ferricrete/*.xdmf` in ParaView and colour by `duricrust`, `Karmor`,
+`elev` or `wtdepth`.
 
 ## Key input blocks
 
