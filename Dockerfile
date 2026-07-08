@@ -58,10 +58,22 @@ ENV FI_PROVIDER=tcp \
 #    Open MPI tries to load it anyway and prints a harmless but noisy
 #    "mca_base_component_repository_open: unable to open mca_btl_openib:
 #    librdmacm.so.1 ... (ignored)" warning on every mpirun.
+#  - OMPI_MCA_btl_vader_single_copy_mechanism=none: skip the CMA (cross-memory
+#    attach) shared-memory fast path outright. Sandboxed containers (Codespaces
+#    in particular) restrict ptrace, so CMA isn't available anyway; without this,
+#    Open MPI tries it first and prints a "CMA support is not available due to
+#    restrictive ptrace settings" warning before silently falling back.
+#  - OMPI_MCA_rmaps_base_oversubscribe=1: don't fail when the requested rank
+#    count (`mpirun -np N`) exceeds the slots Open MPI detects. Codespaces
+#    machine sizes vary and detected core counts under cgroups can be smaller
+#    than expected, so without this, `mpirun -np N` can refuse to launch at all
+#    ("not enough slots") — equivalent to always passing --oversubscribe.
 #  - OMPI_ALLOW_RUN_AS_ROOT / _CONFIRM: this image (and Codespaces containers
 #    generally) run as root with no non-root user configured, so mpirun would
 #    otherwise refuse to run without --allow-run-as-root on every invocation.
 ENV OMPI_MCA_btl=^openib \
+    OMPI_MCA_btl_vader_single_copy_mechanism=none \
+    OMPI_MCA_rmaps_base_oversubscribe=1 \
     OMPI_ALLOW_RUN_AS_ROOT=1 \
     OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1
 
