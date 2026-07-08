@@ -18,11 +18,18 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 from gospl.analyse.gridexport import grid_export, basin_rivers
 
 EX = os.path.dirname(os.path.abspath(__file__))
-STEP, RESO, BID = 10, 250, 1182
+STEP, RESO = 10, 250
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 g = grid_export(os.path.join(EX, "sim_river_soil/h5"), os.path.join(EX, "data/gospl_mesh.npz"),
                 STEP, spacing=RESO)
+
+xbasin = 4.2e5
+ybasin = 4.6e6
+ix = np.where(g["x"]==xbasin)[0]
+iy = np.where(g["y"]==ybasin)[0]
+BID = np.asarray(g["basin"])[iy, ix][0]
+
 riv = basin_rivers(g, basin_id=BID, area_threshold=5e6)
 ms = riv["main_stem"]
 
