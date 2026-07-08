@@ -11,7 +11,7 @@ _Series of examples to illustrate the functionalities of goSPL._
 [![Docs](https://readthedocs.org/projects/gospl/badge/?version=latest)](https://gospl.readthedocs.io/en/latest/)
 [![Docker](https://img.shields.io/docker/v/geodels/gospl-examples?sort=semver&logo=docker&logoColor=white&label=Docker%20Hub)](https://hub.docker.com/r/geodels/gospl-examples)
 [![Image size](https://img.shields.io/docker/image-size/geodels/gospl-examples/latest?logo=docker&logoColor=white&label=image%20size)](https://hub.docker.com/r/geodels/gospl-examples)
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/Geodels/goSPL-examples)
+<img src="https://github.com/codespaces/badge.svg" alt="Open in GitHub Codespaces" height="20">
 
 Full docs are available at: https://gospl.readthedocs.io/en/latest/
 
