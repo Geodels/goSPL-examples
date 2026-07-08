@@ -11,6 +11,7 @@ _Series of examples to illustrate the functionalities of goSPL._
 [![Docs](https://readthedocs.org/projects/gospl/badge/?version=latest)](https://gospl.readthedocs.io/en/latest/)
 [![Docker](https://img.shields.io/docker/v/geodels/gospl-examples?sort=semver&logo=docker&logoColor=white&label=Docker%20Hub)](https://hub.docker.com/r/geodels/gospl-examples)
 [![Image size](https://img.shields.io/docker/image-size/geodels/gospl-examples/latest?logo=docker&logoColor=white&label=image%20size)](https://hub.docker.com/r/geodels/gospl-examples)
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/Geodels/goSPL-examples)
 
 Full docs are available at: https://gospl.readthedocs.io/en/latest/
 
@@ -205,6 +206,28 @@ Mesh-building helpers shared across examples live in [`shared_scripts/umeshFcts.
 | [`groundwater_geochem`](Local-examples/groundwater_geochem) | Water table + capillary-fringe duricrust (erodibility armoring) + Level-B conservative solute geochemistry (two tracers: dissolution → transport → precipitation → river/ocean export). |
 | [`ferricrete_inversion`](Local-examples/ferricrete_inversion) | Two-stage tropical laterite relief inversion: a broad iron ferricrete cuirasse blankets a wet plain (water table + capillary-fringe duricrust, *relative accumulation*), then base-level fall dissects it and the armoured divides are left standing as ferricrete-capped mesas (relief grows ~30 → ~640 m). |
 | [`valley_ferricrete`](Local-examples/valley_ferricrete) | Absolute-accumulation valley ferricrete: the `discharge_gate` confines the crust to groundwater discharge zones (valley floors, footslopes) so it tracks the drainage network instead of blanketing the plain, while the un-precipitated dissolved iron is exported down the rivers — the lateral-accumulation counterpart to `ferricrete_inversion`. |
+
+## Running via GitHub Codespaces
+
+For a zero-install option, this repo has a [`.devcontainer/devcontainer.json`](.devcontainer/devcontainer.json) that builds the same `gospl-smoke` environment straight from the [`Dockerfile`](Dockerfile) and launches JupyterLab automatically — no local Docker or conda needed.
+
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/Geodels/goSPL-examples)
+
+> **Billing.** Codespaces usage here is billed to the account that creates the codespace (not the `Geodels` org), using that account's own included quota/plan — this repo doesn't have organization-level prebuilds or spending configured.
+
+##### Starting a Codespace
+
+Click the badge above, or from the repo's green **Code** button choose the **Codespaces** tab → **Create codespace on main**. GitHub builds the container (a few minutes on first launch — the `mamba env create` step is the same one described under [Installation via Docker](#installation-via-docker)) and opens a browser-based VS Code with the repo mounted at `/work`.
+
+> **First-launch time.** Codespaces builds the container directly from the [`Dockerfile`](Dockerfile) on every fresh launch — there's no prebuild caching on this repo, so expect the full `mamba env create` solve (several minutes, same as the first `docker pull`/build described under [Installation via Docker](#installation-via-docker)) before JupyterLab is reachable. Once created, a given Codespace can be **stopped and restarted** without re-running the build (see the stopping/costs note further below), so this wait is only on first creation, not every time you resume.
+
+Once the container is running, a "JupyterLab" port notification appears for port `8888` — click **Open in Browser**. JupyterLab starts with the same `http://.../lab?token=…` scheme as the Docker image; the token is printed in the container log if the notification doesn't surface it directly (View ▸ Output, or the Ports tab ▸ right-click 8888 ▸ *Open in Browser*).
+
+The `gospl-smoke` environment is already active — same as the Docker image, no `conda activate` needed — and every example is visible under `/work`. Follow the same three-stage workflow described in [Running goSPL-examples](#running-gospl-examples): build inputs, run `gospl` under MPI from a terminal, then post-process in `view_Results.ipynb`.
+
+> **Compute.** `hostRequirements` in the devcontainer requests a 4-core / 8GB machine. Free/personal GitHub accounts may be capped at smaller machine types regardless — check your Codespaces billing plan if launches get capped to 2 cores, since some of the global examples are memory-hungry.
+
+> **Stopping / costs.** Codespaces bill by compute-hour while running. Stop the Codespace from the [codespace list](https://github.com/codespaces) (or it auto-suspends after a period of inactivity) to avoid unnecessary usage.
 
 ## Running goSPL-examples
 
