@@ -11,7 +11,7 @@ _Series of examples to illustrate the functionalities of goSPL._
 [![Docs](https://readthedocs.org/projects/gospl/badge/?version=latest)](https://gospl.readthedocs.io/en/latest/)
 [![Docker](https://img.shields.io/docker/v/geodels/gospl-examples?sort=semver&logo=docker&logoColor=white&label=Docker%20Hub)](https://hub.docker.com/r/geodels/gospl-examples)
 [![Image size](https://img.shields.io/docker/image-size/geodels/gospl-examples/latest?logo=docker&logoColor=white&label=image%20size)](https://hub.docker.com/r/geodels/gospl-examples)
-<img src="https://github.com/codespaces/badge.svg" alt="Open in GitHub Codespaces" height="20">
+[<img src="https://github.com/codespaces/badge.svg" alt="Open in GitHub Codespaces" height="20">](https://codespaces.new/Geodels/goSPL-examples)
 
 Full docs are available at: https://gospl.readthedocs.io/en/latest/
 
@@ -221,7 +221,7 @@ Click the badge above, or from the repo's green **Code** button choose the **Cod
 
 > **First-launch time.** Codespaces builds the container directly from the [`Dockerfile`](Dockerfile) on every fresh launch — there's no prebuild caching on this repo, so expect the full `mamba env create` solve (several minutes, same as the first `docker pull`/build described under [Installation via Docker](#installation-via-docker)) before JupyterLab is reachable. Once created, a given Codespace can be **stopped and restarted** without re-running the build (see the stopping/costs note further below), so this wait is only on first creation, not every time you resume.
 
-Once the container is running, a "JupyterLab" port notification appears for port `8888` — click **Open in Browser**. JupyterLab starts with the same `http://.../lab?token=…` scheme as the Docker image; the token is printed in the container log if the notification doesn't surface it directly (View ▸ Output, or the Ports tab ▸ right-click 8888 ▸ *Open in Browser*).
+Once the container is running, JupyterLab is already active on port `8888` in the background, but it won't auto-open — you land directly in the Codespaces/VS Code interface. To use JupyterLab, open the **Ports** tab (bottom panel), find port `8888`, and click the globe icon to open it in a browser; the `http://.../lab?token=…` URL (with token) is available there or in the container log if you'd rather copy it directly (View ▸ Output).
 
 The `gospl-smoke` environment is already active — same as the Docker image, no `conda activate` needed — and every example is visible under `/work`. Follow the same three-stage workflow described in [Running goSPL-examples](#running-gospl-examples): build inputs, run `gospl` under MPI from a terminal, then post-process in `view_Results.ipynb`.
 

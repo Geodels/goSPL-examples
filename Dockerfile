@@ -52,6 +52,19 @@ RUN echo "conda activate gospl-smoke" >> /etc/skel/.bashrc && \
 ENV FI_PROVIDER=tcp \
     MPICH_CH4_OFI_ENABLE=0
 
+# Open MPI runtime settings for containerized use:
+#  - OMPI_MCA_btl=^openib: exclude the InfiniBand BTL outright. There's no RDMA
+#    hardware in a container (Codespaces or plain docker run), so without this
+#    Open MPI tries to load it anyway and prints a harmless but noisy
+#    "mca_base_component_repository_open: unable to open mca_btl_openib:
+#    librdmacm.so.1 ... (ignored)" warning on every mpirun.
+#  - OMPI_ALLOW_RUN_AS_ROOT / _CONFIRM: this image (and Codespaces containers
+#    generally) run as root with no non-root user configured, so mpirun would
+#    otherwise refuse to run without --allow-run-as-root on every invocation.
+ENV OMPI_MCA_btl=^openib \
+    OMPI_ALLOW_RUN_AS_ROOT=1 \
+    OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1
+
 # Threading defaults for the MPI-parallel solver. goSPL distributes work across
 # MPI ranks, so each rank must run single-threaded BLAS/OpenMP — otherwise every
 # rank spawns as many BLAS threads as there are cores and they oversubscribe the

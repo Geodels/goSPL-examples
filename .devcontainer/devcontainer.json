@@ -11,7 +11,7 @@
   "portsAttributes": {
     "8888": {
       "label": "JupyterLab",
-      "onAutoForward": "openBrowser"
+      "onAutoForward": "silent"
     }
   },
   "hostRequirements": {
