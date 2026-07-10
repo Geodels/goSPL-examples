@@ -10,7 +10,7 @@ dependencies:
   # ruamel.yaml/openmpi/mpi4py/petsc/petsc4py/pyshtools as run-deps, so those
   # are intentionally NOT listed again here (re-listing bare h5py/hdf5/petsc
   # can fight goSPL's MPI-pinned builds).
-  - gospl=2026.6.30
+  - gospl=2026.7.14
   # goSPL [analysis] optional extras — NOT in goSPL's conda run-deps, so the
   # analysis tools (gospl-grid/-section/-catchment, provenance) would otherwise
   # hit their try/except fallbacks. matplotlib + netcdf4 also imported directly.

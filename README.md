@@ -231,7 +231,7 @@ The `gospl-smoke` environment is already active — same as the Docker image, no
 
 ## Running goSPL-examples
 
-The examples provided here target the ``2026.6.30`` goSPL release (see [`environment.yml`](environment.yml)) and consist of simple local and global models that illustrate the main capabilities of the code. If you are new to goSPL, start with the local example [`stratigraphic_record`](Local-examples/stratigraphic_record) and the global example [`continental_flux`](Global-examples/continental_flux).
+The examples provided here target the ``2026.7.14`` goSPL release (see [`environment.yml`](environment.yml)) and consist of simple local and global models that illustrate the main capabilities of the code. If you are new to goSPL, start with the local example [`stratigraphic_record`](Local-examples/stratigraphic_record) and the global example [`continental_flux`](Global-examples/continental_flux).
 
 A typical run, from an activated environment, builds the inputs in the relevant notebook, then launches the model from a terminal with the `gospl` command, and finally post-processes the outputs in `view_Results.ipynb`:
 
