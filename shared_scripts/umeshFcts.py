@@ -814,7 +814,7 @@ def getGridCoast(ncgrid, mapds, dcoast, input_path):
         )
         regridder_loc.to_netcdf(input_path+'/weights_distcoast.nc')
     else:
-        regridder_loc = xe.Regridder(ds_locs, ncgrid, "nearest_s2d", 
+        regridder_loc = xe.Regridder(ds_locs, ncgrid, "nearest_s2d", locstream_in=True, 
                                      filename=input_path+"/weights_distcoast.nc", reuse_weights=True)
 
     return regridder_loc(ds_locs)
