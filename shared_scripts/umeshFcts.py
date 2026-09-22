@@ -157,8 +157,45 @@ def xyz2lonlat(X, Y, Z):
 
     return lonlat
 
+def _build_hfun_grid(nds, target_hfun_res=None):
+    """Build a (possibly coarsened) hfun raster for JIGSAW.
+
+    JIGSAW's sizing-function grid only needs to resolve *how cell width
+    varies in space*, not the native resolution of the source DEM. Passing
+    it a raster at DEM resolution (e.g. 10000x10000) is what makes
+    ``savemsh``/``loadmsh`` and JIGSAW's refinement scan slow. This
+    downsamples to a stride tied to the coarsest cell width present in the
+    field, unless the caller supplies an explicit ``target_hfun_res``.
+
+    Parameters
+    ----------
+    nds : xarray.Dataset
+        Dataset containing x, y, and cellwidth variables.
+    target_hfun_res : float or None
+        Desired spacing (in the same units as nds.x/nds.y) between hfun
+        grid points. Defaults to half the minimum cell width in the field.
+
+    Returns
+    -------
+    hx, hy, hval : ndarray
+        Coarsened grid coordinates and cell-width values.
+    """
+
+    dx_native = abs(float(nds.x.values[1] - nds.x.values[0]))
+    if target_hfun_res is None:
+        target_hfun_res = 0.5 * float(nds.cellwidth.values.min())
+    stride = max(1, int(round(target_hfun_res / dx_native)))
+
+    hx = np.ascontiguousarray(nds.x.values[::stride], dtype=np.float64)
+    hy = np.ascontiguousarray(nds.y.values[::stride], dtype=np.float64)
+    hval = np.ascontiguousarray(
+        nds.cellwidth.values[::stride, ::stride], dtype=np.float64
+    )
+    return hx, hy, hval
+
+
 def planarMesh(nds, outfolder, fvtk=None, fumpas=True, voro=True,
-               reuse_existing=True):
+               reuse_existing=True, target_hfun_res=None):
     """Generate a 2D planar mesh and optionally export VTK/MPAS outputs.
 
     Parameters
@@ -176,6 +213,14 @@ def planarMesh(nds, outfolder, fvtk=None, fumpas=True, voro=True,
     reuse_existing : bool
         If True, skip the expensive Jigsaw/MPAS pipeline when the requested
         outputs already exist.
+    target_hfun_res : float or None
+        Spacing of the JIGSAW sizing-function grid, used only when
+        ``cellwidth`` actually varies spatially (a uniform field skips the
+        grid entirely and uses a scalar sizing function instead). Defaults
+        to half the minimum cell width. Leave this at the DEM's native
+        resolution only if you truly need cell width to track fine-scale
+        DEM features; otherwise a coarser value here is what makes large
+        domains (e.g. ~10000x10000 source grids) tractable.
     """
 
     opts = jigsawpy.jigsaw_jig_t()
@@ -201,12 +246,25 @@ def planarMesh(nds, outfolder, fvtk=None, fumpas=True, voro=True,
 
     newx = np.ascontiguousarray(nds.x.values, dtype=np.float64)
     newy = np.ascontiguousarray(nds.y.values, dtype=np.float64)
-    hmat = jigsawpy.jigsaw_msh_t()
-    hmat.mshID = 'EUCLIDEAN-GRID'
-    hmat.xgrid = newx
-    hmat.ygrid = newy
-    hmat.value = np.ascontiguousarray(nds.cellwidth.values, dtype=np.float64)
-    jigsawpy.savemsh(opts.hfun_file, hmat)
+
+    # Uniform cell width: skip the hfun raster entirely and hand JIGSAW a
+    # scalar sizing function. This avoids writing/reading a huge structured
+    # grid file and is dramatically faster than the grid-based path below.
+    cw = nds.cellwidth.values
+    uniform_cellwidth = np.allclose(cw, cw.flat[0])
+
+    if uniform_cellwidth:
+        uniform_val = float(cw.flat[0])
+        use_hfun_grid = False
+    else:
+        hx, hy, hval = _build_hfun_grid(nds, target_hfun_res=target_hfun_res)
+        hmat = jigsawpy.jigsaw_msh_t()
+        hmat.mshID = 'EUCLIDEAN-GRID'
+        hmat.xgrid = hx
+        hmat.ygrid = hy
+        hmat.value = hval
+        jigsawpy.savemsh(opts.hfun_file, hmat)
+        use_hfun_grid = True
 
     typeEDGE2 = {'names': ['index', 'IDtag'], 'formats': [('<i4', (2,)), '<i4'], 'offsets': [0, 8], 'itemsize': 12, 'aligned': True}
     typeVERT2 = {'names': ['coord', 'IDtag'], 'formats': [('<f8', (2,)), '<i4'], 'offsets': [0, 16], 'itemsize': 24, 'aligned': True}
@@ -232,8 +290,13 @@ def planarMesh(nds, outfolder, fvtk=None, fumpas=True, voro=True,
     jigsawpy.savemsh(opts.geom_file, geom)
 
     opts.hfun_scal = 'absolute'
-    opts.hfun_hmax = float("inf")
-    opts.hfun_hmin = 0.0
+    if use_hfun_grid:
+        opts.hfun_hmax = float("inf")
+        opts.hfun_hmin = 0.0
+    else:
+        opts.hfun_file = None  # no raster written; use scalar sizing below
+        opts.hfun_hmax = uniform_val
+        opts.hfun_hmin = uniform_val
     opts.mesh_dims = +2  # 2-dim. simplexes
     opts.optm_qlim = 0.9375
     opts.verbosity = 0
@@ -814,7 +877,7 @@ def getGridCoast(ncgrid, mapds, dcoast, input_path):
         )
         regridder_loc.to_netcdf(input_path+'/weights_distcoast.nc')
     else:
-        regridder_loc = xe.Regridder(ds_locs, ncgrid, "nearest_s2d", locstream_in=True, 
+        regridder_loc = xe.Regridder(ds_locs, ncgrid, "nearest_s2d", 
                                      filename=input_path+"/weights_distcoast.nc", reuse_weights=True)
 
     return regridder_loc(ds_locs)
