@@ -19,7 +19,7 @@ spl:
     m: 0.4   # flow-accumulation/area exponent (default 0.5)
 
 diffusion:
-    hillslopeKa: 0.2   # aerial (land) linear hillslope diffusivity (m^2/yr)
+    hillslopeKa: 0.01   # aerial (land) linear hillslope diffusivity (m^2/yr)
     hillslopeKm: 1.0   # marine linear hillslope diffusivity (m^2/yr)
 
 flexure:
