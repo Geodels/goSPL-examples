@@ -79,3 +79,7 @@ Global-examples/continental_geochem/flowsed
 Global-examples/continental_geochem/surface*.nc
 Global-examples/continental_geochem/results/*
 # Global-examples/continental_geochem/geochem_inputs.npz
+Local-examples/hillslope_channels/data
+Local-examples/hillslope_channels/sim_*
+Local-examples/hillslope_channels/log_*.txt
+Local-examples/hillslope_channels/scripts/__pycache__

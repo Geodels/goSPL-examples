@@ -198,6 +198,7 @@ Mesh-building helpers shared across examples live in [`shared_scripts/umeshFcts.
 | [`generate_2Dmesh`](Local-examples/generate_2Dmesh) | Building 2D unstructured (Voronoi / UGRID) meshes and goSPL input files, including from a GeoTIFF DEM. |
 | [`flow_direction`](Local-examples/flow_direction) | Comparison of flow-routing schemes — single-flow (SFD), two-neighbour and multiple-flow-direction (MFD). |
 | [`implicit_timestepping`](Local-examples/implicit_timestepping) | Sensitivity of the implicit solver to the time step Δt (500 yr → 5 kyr): stability versus accuracy. |
+| [`hillslope_channels`](Local-examples/hillslope_channels) | Hillslope diffusion and river channels: with diffusion on every cell the channel steepness of an uplifted block grows as the mesh is refined (30 → 65 m at 200 → 50 m); `diffusion: channelQ` holds the river cells out of the diffusion and keeps it at U/K = 25 m at every resolution. |
 | [`escarpment_retreat`](Local-examples/escarpment_retreat) | Retreat of a rifted-margin escarpment under fluvial incision, hillslope diffusion, orographic rain and flexure. |
 | [`glacial_erosion`](Local-examples/glacial_erosion) | Glacial erosion coupled with river/soil transport and critical-slope diffusion. |
 | [`soil_generation`](Local-examples/soil_generation) | Soil production from bedrock weathering coupled with river transport and hillslope diffusion. |
