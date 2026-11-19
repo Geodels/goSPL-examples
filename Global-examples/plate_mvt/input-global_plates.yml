@@ -4,6 +4,7 @@ domain:
     npdata: ['vars_30/mesh','v','c','z']      # initial mesh: path, vertices 'v', cells 'c', elevation 'z' (.npz)
     flowdir: 3                                # flow-direction method; 1=SFD ... 6=MFD
     advect: 'interp'                          # horizontal-displacement advection: upwind/iioe1/iioe2/interp
+    interp_remap: 1                           # apply each event's motion in remaps of ~1 mesh spacing (barycentric weights)
 
 time:
     start: 250.e6                             # model start time (years)
