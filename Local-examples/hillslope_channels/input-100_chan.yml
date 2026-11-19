@@ -1,0 +1,39 @@
+name: hillslope channels 100_chan
+
+domain:
+    npdata: ['data/mesh100','v','c','z']   # mesh [path, vertices, cells, elevation]
+    flowdir: 1   # single-flow routing
+    bc: 'ffff'   # fixed (base-level) edges N,E,S,W
+    seadepo: False
+    nodep: True   # detachment-limited: eroded material leaves the block
+
+time:
+    start: 0.
+    end: 3.e6   # steady state after ~0.5 Myr; run on to check it holds
+    tout: 2.5e5
+    dt: 5.e3
+
+spl:
+    K: 4.e-5   # erodibility: theoretical channel steepness U/K = 25 m
+    d: 0.
+    m: 0.5
+
+diffusion:
+    hillslopeKa: 0.2   # land hillslope diffusivity (m2/yr)
+    hillslopeKm: 0.
+    channelQ: 1.e6   # river cells (discharge >= channelQ, m3/yr) are held out of the diffusion
+
+sea:
+    position: -10.
+
+climate:
+  - start: 0.
+    uniform: 1.   # m/yr
+
+tectonics:
+  - start: 0.
+    end: 1.e8
+    upsub: ['data/mesh100','t']   # uplift rate (m/yr), 0 on the edges
+
+output:
+    dir: 'sim_100_chan'
