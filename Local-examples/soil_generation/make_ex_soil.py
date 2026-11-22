@@ -83,7 +83,8 @@ axc.contour(x, y, (basin == BID).astype(float), levels=[0.5], colors="k", linewi
 for tb in riv["tributaries"]:
     axc.plot(tb["x"] / 1e3, tb["y"] / 1e3, color="#1f4e79", lw=0.3, alpha=0.7)
 axc.plot(ms["x"] / 1e3, ms["y"] / 1e3, color="k", lw=1.8)
-axc.plot(ms["x"][0] / 1e3, ms["y"][0] / 1e3, "v", color="w", mec="k", ms=8)  # outlet
+axc.plot(ms["x"][-1] / 1e3, ms["y"][-1] / 1e3, "v", color="w", mec="k", ms=9, mew=1.2,
+         clip_on=False, zorder=10)  # outlet: main_stem runs source -> outlet
 axc.set_title(f"(c) drainage basins & basin {BID} network", fontsize=10)
 cbar(axc)                                        # blank strip -> same map size as (a),(b)
 
