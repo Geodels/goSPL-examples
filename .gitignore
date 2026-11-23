@@ -85,5 +85,9 @@ Local-examples/gravity_currents/sim_*
 Local-examples/gravity_currents/log_*.txt
 Local-examples/gravity_currents/summary_*.jsonl
 Local-examples/gravity_currents/scripts/__pycache__
+Global-examples/gravity_currents_global/sim_*
+Global-examples/gravity_currents_global/log_*.txt
+Global-examples/gravity_currents_global/summary_*.jsonl
+Global-examples/gravity_currents_global/scripts/__pycache__
 Local-examples/hillslope_channels/log_*.txt
 Local-examples/hillslope_channels/scripts/__pycache__

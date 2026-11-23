@@ -1,0 +1,87 @@
+name: Global gravity-current example, with gravity currents
+
+domain:
+    npdata: ['../erodep_1My/vars_40/mesh','v','c','z']      # initial mesh: path, vertices 'v', cells 'c', elevation 'z' (.npz)
+    flowdir: 5                                # flow-direction method; 1=SFD ... 6=MFD
+
+time:
+    start: 251.e6                             # model start time (years)
+    end: 252.e6                               # model end time (years)
+    tout: 1.e5                                # output interval (years)
+    dt: 5.e4                                  # internal time step (years)
+    strat: 5.e4                               # stratigraphic layer interval (years)
+
+spl:
+    K: 3.e-6                                  # stream-power erodibility K in E=K(P^d A)^m S^n
+    d: 0.42                                   # precipitation exponent (default 0.0)
+    m: 0.5                                    # flow-accumulation/area exponent (default 0.5)
+    G: 2                                      # continental deposition coeff (default 0; >0 transport-limited)
+
+# diffusion:
+#     hillslopeKa: 0.5     # aerial (land) LINEAR hillslope/soil-creep diffusivity (m²/yr)
+#     hillslopeKm: 2.0     # marine (subaqueous) LINEAR hillslope diffusivity (m²/yr)
+#     nonlinKm:   1.e4     # NON-LINEAR diffusivity for freshly river-deposited
+#                          #   marine sediment (m²/yr) — THIS is what the marine
+#                          #   diffusion solver (TS *or* Picard) integrates
+#     Gmar:       0.5      # dimensionless marine deposition coefficient (the
+#                          #   coupled h/q Schur deposition solve, _depMarineSystem)
+#     clinSlp:    1.e-5    # max clinoform slope; caps the top of marine deposits
+#                          #    vs distance-to-shore
+
+diffusion:
+    hillslopeKa: 0.5                          # aerial (land) linear hillslope diffusivity (m^2/yr)
+    hillslopeKm: 2.0                          # marine linear hillslope diffusivity (m^2/yr)
+    nonlinKm: 1.e4                            # non-linear diffusivity for fresh river-deposited marine sediment (m^2/yr)
+    Gmar: 0.5                                 # marine deposition coefficient (dimensionless)
+    clinSlp: 1.e-5                            # max clinoform slope; caps marine deposit top vs distance-to-shore
+    marineSolver: picard   # default is 'ts' (the adaptive non-linear time-stepper)
+    picardSub: 10          # backward-Euler sub-steps over each goSPL dt (accuracy↕)
+    picardIts: 2           # Picard (lagged-Cd) iterations per sub-step
+
+flexure:
+    method: 'global'                          # 'fem' (flat/2D) or 'global' (spherical)
+    thick: 30.e3                              # elastic thickness Te (m)
+    rhoc: 2300.0                              # crust/sediment load density (kg/m^3)
+    rhoa: 3300.0                              # asthenosphere density (kg/m^3)
+    young: 65e9                               # Young's modulus (Pa)
+    nu: 0.25                                  # Poisson ratio
+    res_deg: 0.25                             # Driscoll-Healy grid resolution in degrees (global method)
+    interval: 1                               # Apply flexure only every interval goSPL steps
+
+temap:
+  - start: 251.e6                             # time (years) the elastic-thickness map becomes active
+    map: ['../erodep_1My/vars_40/forcing251', 'te']         # per-vertex elastic thickness ['file','key']
+
+sea:
+    position: 0.                              # relative sea-level position (m) (default 0)
+
+climate:
+  - start: 251.e6                             # event start time (years)
+    map: ['../erodep_1My/vars_40/forcing251','r']           # per-vertex precipitation grid ['file','key']
+
+strata:
+    dual: True                                # coarse and fine sediment
+    coarse: {phi0: 0.49, z0: 3700.}           # porosity at the surface and compaction depth (m)
+    fine:   {phi0: 0.63, z0: 1960., k_factor: 1.5}
+    bedrock_coarse_frac: 0.6                  # coarse fraction of the eroded bedrock
+    fine_diff_factor: 2.0                     # fine sediment diffuses twice as fast
+
+gravity:
+    # Trigger: the fraction of each river's load carried by floods whose
+    # sediment concentration exceeds the hyperpycnal threshold (40 kg/m3),
+    # from the river's mean discharge and load (log-normal daily discharge,
+    # sigma 1.2, rating curve Qs ~ Q^1.8).
+    flood: {sigma: 1.2}
+    # Gravity currents carry mostly the suspended load: the coarse load is
+    # diverted with 0.3 x the flood fraction.
+    coarse_factor: 0.3
+    # On a global mesh (cells of about 37 km here) the currents follow the
+    # network of the clinoform cascade (one depression fill per step).
+    network: smoothed
+    # Run-out lengths (m), several cell sizes.
+    runout: 1.e5          # coarse
+    runout_fine: 4.e5     # fine
+    # bypass_depth: 50 m by default: no gravity deposit on the shelf.
+
+output:
+    dir: 'sim_gravity'                           # output directory name

@@ -204,6 +204,7 @@ Mesh-building helpers shared across examples live in [`shared_scripts/umeshFcts.
 | [`erodep_1My`](Global-examples/erodep_1My) | Global 1 Myr run coupling stream-power erosion, marine deposition and flexural isostasy. |
 | [`plate_mvt`](Global-examples/plate_mvt) | Global landscape evolution driven by horizontal plate motion (advection) together with vertical tectonics. |
 | [`continental_geochem`](Global-examples/continental_geochem) | Global climate-zoned solute geochemistry: latitudinal provinces each shed a characteristic species (tropical iron/ferricrete, subtropical-arid carbonate/calcrete, temperate silica/silcrete) under temperature-driven (Arrhenius) weathering, with a capillary-fringe duricrust and per-basin / per-species dissolved-load delivery to the ocean. |
+| [`gravity_currents_global`](Global-examples/gravity_currents_global) | Gravity currents on the global `erodep_1My` model (1 Myr, dual lithology and stratigraphy added), with the fraction of each river's load computed from hyperpycnal floods: gravity budget, global maps of the deposits, one margin, and filled stratigraphic sections (fine fraction and facies) across it, compared with the same run without gravity currents. Reuses the `erodep_1My` inputs; needs goSPL with the gravity module. |
 
 ### Local examples
 
