@@ -85,7 +85,7 @@ for sp, col in [("carbonate", "#c0392b"), ("silica", "#2e6da4")]:
              label=f"{sp}: precipitated in crust")
 axf.set_yscale("log")
 axf.set_xlabel("time (ky)"); axf.set_ylabel("cumulative solute mass (rel. units)")
-axf.set_title("(f) solute fate: export vs.\\ crust", fontsize=10)
+axf.set_title("(f) solute fate: export vs. crust", fontsize=10)
 axf.legend(fontsize=7, frameon=False, loc="center right")
 axf.grid(True, which="both", ls=":", lw=0.5, alpha=0.5)
 
