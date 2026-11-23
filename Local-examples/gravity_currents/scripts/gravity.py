@@ -16,7 +16,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.colors import LightSource, TwoSlopeNorm
 from scipy.interpolate import griddata
-from scipy.spatial import cKDTree
 
 RUNS = [("sim_nogravity", "without gravity currents"),
         ("sim_gravity", "with gravity currents")]
@@ -116,41 +115,30 @@ def strike_sections(step, xs=(130e3, 140e3, 150e3, 160e3, 170e3, 180e3, 190e3)):
     return fig
 
 
-def dip_sections(step, ys=(30e3, 55e3, 80e3), xlim=(120e3, 200e3), zlim=(-560, -40)):
-    """Stratigraphy along x at fixed y, coloured by the layer fine fraction.
-    Layers are placed at their present position: thicknesses stacked down from
-    today's surface (``stratZ`` is the surface elevation when a layer formed,
-    not its present depth)."""
-    xs = np.linspace(xlim[0], xlim[1], 801)
-    fig, ax = plt.subplots(len(ys), 2, figsize=(13, 3.2 * len(ys)), squeeze=False,
+def dip_sections(step, ys=(30e3, 55e3, 80e3), color_by="lithology",
+                 xlim=(120e3, 200e3), zlim=(-560, -40), mesh="data/gospl_mesh.npz"):
+    """Stratigraphic sections along x at fixed y for both runs, drawn with
+    goSPL's ``gospl.analyse.stratasection.cross_section``: each layer is a
+    filled band between its present-day interfaces, coloured by ``color_by``
+    (``lithology`` = fine fraction, ``facies`` = depositional facies from the
+    water depth at deposition, or ``age``, ``porosity``...), with the surface,
+    the basement and the sea level."""
+    from gospl.analyse.stratasection import cross_section, load_strata
+
+    fig, ax = plt.subplots(len(ys), 2, figsize=(14, 3.4 * len(ys)), squeeze=False,
                            constrained_layout=True)
     for c, (sim, lab) in enumerate(RUNS):
-        xy, S = load(sim, step, ["stratH", "stratHf"], kind="stratal")
-        _, E = load(sim, step, ["elev"])
-        H, Hf = S["stratH"], S["stratHf"]
-        ff = np.divide(Hf, H, out=np.full_like(H, np.nan), where=H > 1e-6)
-        above = np.cumsum(H[:, ::-1], axis=1)[:, ::-1] - H
-        top = E["elev"][:, None] - above
-        tree = cKDTree(xy)
+        data = load_strata(os.path.join(sim, "h5"), mesh, step=step)
         for r, yv in enumerate(ys):
             a = ax[r, c]
-            _, idx = tree.query(np.column_stack([xs, np.full_like(xs, yv)]))
-            for k in range(1, H.shape[1]):
-                ok = H[idx, k] > 0.05
-                mid = top[idx, k] - 0.5 * H[idx, k]
-                sc = a.scatter(xs[ok] / 1e3, mid[ok], c=ff[idx, k][ok], s=3, marker="s",
-                               linewidths=0, cmap="cividis_r", vmin=0, vmax=1)
-                if k % 5 == 0:
-                    a.plot(xs / 1e3, np.where(ok, top[idx, k] - H[idx, k], np.nan),
-                           color="k", lw=0.3, alpha=0.6)
-            a.plot(xs / 1e3, E["elev"][idx], color="k", lw=1.0)
-            a.set_ylim(*zlim)
+            cross_section(data, kind="x", at=yv, color_by=color_by, ax=a,
+                          layer_lines=5, xlim=xlim, ylim=zlim,
+                          legend_loc="lower left")
             a.set_title(f"{lab}, y = {yv/1e3:.0f} km", fontsize=10)
-            if c == 0:
-                a.set_ylabel("elevation (m)")
-            if r == len(ys) - 1:
-                a.set_xlabel("x (km)")
-    fig.colorbar(sc, ax=ax, shrink=0.5, label="layer fine fraction (0 = coarse)")
+            if c == 1:
+                a.set_ylabel("")
+            if r < len(ys) - 1:
+                a.set_xlabel("")
     return fig
 
 
