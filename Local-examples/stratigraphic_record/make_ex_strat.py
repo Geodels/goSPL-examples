@@ -4,7 +4,7 @@ paper. Uses the pre-computed output of the stratigraphic_record / dual_lithology
 examples (same prograding margin) and the gospl.analyse.stratasection toolkit:
   (a) facies cross-section (strati run) with the three well sites marked;
   (b) Wheeler (chronostratigraphic) diagram;  (c) the imposed sea-level forcing;
-  (d) coarse-fraction wells and (e) porosity wells at the topset/foreset/bottomset
+  (d) coarse-fraction wells and (e) porosity wells at 130, 145 and 158 km (the dual run progrades ~5 km further than the section of (a))
       from the dual-lithology run, sharing a common elevation axis.
 """
 import os
@@ -27,7 +27,7 @@ data = load_strata(os.path.join(STR, "strati/h5"), os.path.join(STR, "inputs/gos
 dd = load_strata(os.path.join(DUAL, "strati_dual/h5"), os.path.join(DUAL, "inputs/gospl_mesh.npz"), step=25)
 sl = np.loadtxt(os.path.join(STR, "inputs/sealevel.csv"))
 
-WELLS = [(130e3, 50e3, "topset"), (145e3, 50e3, "foreset"), (158e3, 50e3, "bottomset")]
+WELLS = [(130e3, 50e3, "130 km"), (145e3, 50e3, "145 km"), (158e3, 50e3, "158 km")]   # wells of the dual run
 YLIM = [-345, -20]                                   # shared elevation axis for the wells
 H = np.asarray(dd["stratH"], float)
 tmin, tmax = np.nanpercentile(H[H > 0], [2, 98])     # layer-thickness colour range

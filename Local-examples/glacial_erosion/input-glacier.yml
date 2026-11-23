@@ -28,14 +28,14 @@ ice:
     eheight: 0.5              # Bahr thickness factor
     fwidth: 1.5               # Bahr width factor
     melt: 5.                  # ablation in net balance (0 = accumulation-only; 1 = true net; >1 shorter tongues)
-    slide: 1.0e-3             # basal sliding coefficient (Glen sliding law)
+    slide: 0.3                # basal sliding coefficient A_s (gives sliding of tens of m/yr)
     glen: 3.0                 # Glen sliding exponent n
     accum_factor: 0.9         # precip -> ice accumulation fraction (optional)
     accum_max: 2.0            # cap accumulation rate, m ice/yr (optional)
     abrasion:
-        Kg: 1.0e-3            # vertical abrasion coeff (default 0.0; 0 disables glacial erosion)
+        Kg: 3.0e-5            # vertical abrasion coeff (default 0.0; 0 disables glacial erosion)
         l: 1.0                # basal-sliding-velocity exponent (default 1.0)
-        Kl: 1.0e-3            # lateral (valley-wall) erosion coeff -> U-shaping
+        Kl: 3.0e-5            # lateral (valley-wall) erosion coeff -> U-shaping
         lat_l: 1.0            # lateral velocity exponent (defaults to l)
 
 diffusion:
