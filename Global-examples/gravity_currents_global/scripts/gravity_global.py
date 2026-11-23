@@ -160,7 +160,8 @@ def sections(step, path, color_by="lithology", ylim=None):
     drawn with ``gospl.analyse.stratasection.cross_section`` (filled layers
     coloured by ``color_by``: ``lithology`` = fine fraction on a common 0-1
     scale, ``facies`` with the global depth classes ``GLOBAL_FACIES``,
-    ``age``, ...)."""
+    ``age``, ...). Without ``ylim`` the sections reach the base of the
+    stratigraphy, with the same vertical range in both panels."""
     from gospl.analyse.stratasection import cross_section, load_strata
 
     fig, ax = plt.subplots(2, 1, figsize=(12, 8), constrained_layout=True)
@@ -174,4 +175,17 @@ def sections(step, path, color_by="lithology", ylim=None):
                 if hasattr(coll, "get_array") and coll.get_array() is not None:
                     coll.set_clim(0.0, 1.0)
         a.set_title(lab, fontsize=10)
+    if ylim is None:
+        # each panel is scaled to its whole pile, down to the basement; give
+        # both the same range so they can be compared
+        lo = min(a.get_ylim()[0] for a in ax)
+        hi = max(a.get_ylim()[1] for a in ax)
+        for a in ax:
+            # extend the grey basement fill (drawn by cross_section down to just
+            # below the basement) to the shared bottom of the panels
+            fills = [c for c in a.collections if c.get_label() == "basement"]
+            bottom = min((p.vertices[:, 1].min() for c in fills for p in c.get_paths()),
+                         default=a.get_ylim()[0])
+            a.axhspan(lo, bottom, color="0.85", zorder=0.5, lw=0)
+            a.set_ylim(lo, hi)
     return fig
