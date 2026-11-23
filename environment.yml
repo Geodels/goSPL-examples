@@ -56,5 +56,6 @@ dependencies:
   - pip
   - pip:
       - perlin-noise
-      # goSPL from the dev branch (see the top of this file)
-      - gospl @ git+https://github.com/Geodels/gospl.git@dev
+      # goSPL from its feat/gravity-currents branch (the gravity module is not on
+      # goSPL dev yet); switch back to @dev when it is merged there
+      - gospl @ git+https://github.com/Geodels/gospl.git@feat/gravity-currents
