@@ -2,8 +2,10 @@
 Plots for the gravity_currents example: map views, strike sections (along y),
 stratigraphic dip sections (along x) and the gravity budget through time.
 
-Every function compares the run with gravity currents (``sim_gravity``) and
-the reference without them (``sim_nogravity``). The outputs are read directly
+Every function compares a list of runs, by default the run with gravity
+currents (``sim_gravity``) and the reference without them (``sim_nogravity``);
+``FAILURE`` adds the run with slope failure (``sim_failure``). The outputs are
+read directly
 from goSPL's HDF5 files (one file per MPI rank) and interpolated on regular
 lines or grids for plotting.
 """
@@ -19,6 +21,9 @@ from scipy.interpolate import griddata
 
 RUNS = [("sim_nogravity", "without gravity currents"),
         ("sim_gravity", "with gravity currents")]
+FAILURE = [("sim_gravity", "gravity currents"),
+           ("sim_failure", "gravity currents + slope failure")]
+COLORS = ["#2a6fb0", "#d0731c", "#3a9a5b"]
 
 
 def _nranks(sim):
@@ -46,14 +51,15 @@ def last_step(sim):
     return max(int(os.path.basename(f).split(".")[1]) for f in files)
 
 
-def maps(step, xlim=(120e3, 200e3), dx=250.0, sealevel=None):
+def maps(step, xlim=(120e3, 200e3), dx=250.0, sealevel=None, runs=RUNS):
     """Shaded bathymetry, net gravity deposit and surface fine fraction of the
-    margin, for both runs."""
+    margin, one row per run."""
     X, Y = np.meshgrid(np.arange(xlim[0], xlim[1] + 1, dx), np.arange(0, 100e3 + 1, dx))
     ext = [xlim[0] / 1e3, xlim[1] / 1e3, 0, 100]
     ls = LightSource(azdeg=315, altdeg=30)
-    fig, ax = plt.subplots(2, 3, figsize=(13, 9), constrained_layout=True)
-    for r, (sim, lab) in enumerate(RUNS):
+    fig, ax = plt.subplots(len(runs), 3, figsize=(13, 4.5 * len(runs)), squeeze=False,
+                           constrained_layout=True)
+    for r, (sim, lab) in enumerate(runs):
         keys = ["elev", "surfFineFrac"] + (["gravDep"] if "nogravity" not in sim else [])
         xy, f = load(sim, step, keys)
         z = griddata(xy, f["elev"], (X, Y))
@@ -85,20 +91,21 @@ def maps(step, xlim=(120e3, 200e3), dx=250.0, sealevel=None):
     return fig
 
 
-def strike_sections(step, xs=(130e3, 140e3, 150e3, 160e3, 170e3, 180e3, 190e3)):
+def strike_sections(step, xs=(130e3, 140e3, 150e3, 160e3, 170e3, 180e3, 190e3),
+                    runs=RUNS):
     """Profiles along y at fixed x: elevation (initial dashed), and the
     cumulative deposit (solid) with the flexural displacement (dotted)."""
     yy = np.linspace(0, 100e3, 501)
-    colors = ["#2a6fb0", "#d0731c"]
+    colors = COLORS
     fig, ax = plt.subplots(len(xs), 2, figsize=(12, 2.1 * len(xs)), sharex=True,
                            constrained_layout=True)
-    xy0, f0 = load(RUNS[0][0], 0, ["elev"])
-    data = [load(sim, step, ["elev", "erodep", "flexIso"]) for sim, _ in RUNS]
+    xy0, f0 = load(runs[0][0], 0, ["elev"])
+    data = [load(sim, step, ["elev", "erodep", "flexIso"]) for sim, _ in runs]
     for r, xv in enumerate(xs):
         pts = np.column_stack([np.full_like(yy, xv), yy])
         ax[r, 0].plot(yy / 1e3, griddata(xy0, f0["elev"], pts), color="0.55", ls="--",
                       lw=1.2, label="initial")
-        for (xy, f), (_, lab), c in zip(data, RUNS, colors):
+        for (xy, f), (_, lab), c in zip(data, runs, colors):
             ax[r, 0].plot(yy / 1e3, griddata(xy, f["elev"], pts), color=c, lw=1.6, label=lab)
             ax[r, 1].plot(yy / 1e3, griddata(xy, f["erodep"], pts), color=c, lw=1.6)
             ax[r, 1].plot(yy / 1e3, griddata(xy, f["flexIso"], pts), color=c, lw=1.0, ls=":")
@@ -116,8 +123,9 @@ def strike_sections(step, xs=(130e3, 140e3, 150e3, 160e3, 170e3, 180e3, 190e3)):
 
 
 def dip_sections(step, ys=(30e3, 55e3, 80e3), color_by="lithology",
-                 xlim=(120e3, 200e3), zlim=(-560, -40), mesh="data/gospl_mesh.npz"):
-    """Stratigraphic sections along x at fixed y for both runs, drawn with
+                 xlim=(120e3, 200e3), zlim=(-560, -40), mesh="data/gospl_mesh.npz",
+                 runs=RUNS):
+    """Stratigraphic sections along x at fixed y for each run, drawn with
     goSPL's ``gospl.analyse.stratasection.cross_section``: each layer is a
     filled band between its present-day interfaces, coloured by ``color_by``
     (``lithology`` = fine fraction, ``facies`` = depositional facies from the
@@ -125,9 +133,9 @@ def dip_sections(step, ys=(30e3, 55e3, 80e3), color_by="lithology",
     the basement and the sea level."""
     from gospl.analyse.stratasection import cross_section, load_strata
 
-    fig, ax = plt.subplots(len(ys), 2, figsize=(14, 3.4 * len(ys)), squeeze=False,
-                           constrained_layout=True)
-    for c, (sim, lab) in enumerate(RUNS):
+    fig, ax = plt.subplots(len(ys), len(runs), figsize=(7 * len(runs), 3.4 * len(ys)),
+                           squeeze=False, constrained_layout=True)
+    for c, (sim, lab) in enumerate(runs):
         data = load_strata(os.path.join(sim, "h5"), mesh, step=step)
         for r, yv in enumerate(ys):
             a = ax[r, c]
@@ -135,7 +143,7 @@ def dip_sections(step, ys=(30e3, 55e3, 80e3), color_by="lithology",
                           layer_lines=5, xlim=xlim, ylim=zlim,
                           legend_loc="lower left")
             a.set_title(f"{lab}, y = {yv/1e3:.0f} km", fontsize=10)
-            if c == 1:
+            if c > 0:
                 a.set_ylabel("")
             if r < len(ys) - 1:
                 a.set_xlabel("")
@@ -144,7 +152,8 @@ def dip_sections(step, ys=(30e3, 55e3, 80e3), color_by="lithology",
 
 def budget(summary="summary_gravity.jsonl"):
     """Gravity budget per step from the ``--summary`` record: supplied and
-    eroded volumes against deposited and exported ones, and the closure."""
+    eroded volumes (of which failed, with slope failure) against deposited and
+    exported ones, and the closure."""
     rows = [json.loads(l) for l in open(summary)]
     g = [(r["t"], r["gravity"]) for r in rows if "gravity" in r]
     t = np.array([v[0] for v in g]) / 1e3
@@ -152,13 +161,16 @@ def budget(summary="summary_gravity.jsonl"):
     ero = np.array([v[1].get("eroded", 0.0) for v in g]) * 1e-9
     dep = np.array([v[1]["deposited"] for v in g]) * 1e-9
     exp = np.array([v[1]["exported"] for v in g]) * 1e-9
+    fail = np.array([v[1].get("failed", 0.0) for v in g]) * 1e-9
     clo = np.abs(sup + ero - dep - exp) / np.maximum(sup + ero, 1e-30)
     fig, ax = plt.subplots(1, 2, figsize=(11, 3.4), constrained_layout=True)
     ax[0].plot(t, sup, color="#2a6fb0", lw=1.8, label="supplied")
     ax[0].plot(t, dep, color="#3a9a5b", lw=1.8, label="deposited")
     ax[0].plot(t, exp, color="#d0731c", lw=1.8, label="exported")
-    if ero.any():
-        ax[0].plot(t, ero, color="0.4", lw=1.2, label="eroded")
+    if fail.any():
+        ax[0].plot(t, fail, color="0.35", lw=1.4, label="failed (slope failure)")
+    if (ero - fail > 0).any():
+        ax[0].plot(t, ero - fail, color="0.6", lw=1.2, label="eroded by the currents")
     ax[0].set_xlabel("time (kyr)")
     ax[0].set_ylabel("volume per step (km$^3$)")
     ax[0].legend(frameon=False)
