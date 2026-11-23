@@ -82,6 +82,7 @@ gravity:
     runout: 1.e5          # coarse
     runout_fine: 4.e5     # fine
     # bypass_depth: 50 m by default: no gravity deposit on the shelf.
+    # deposit_spread: two cell sizes by default (about 74 km here).
 
 output:
     dir: 'sim_gravity'                           # output directory name

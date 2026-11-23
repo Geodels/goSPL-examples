@@ -18,6 +18,8 @@ from matplotlib.colors import TwoSlopeNorm
 
 RUNS = [("sim_nogravity", "without gravity currents"),
         ("sim_gravity", "with gravity currents")]
+FAILURE = [("sim_gravity", "gravity currents"),
+           ("sim_failure", "gravity currents + slope failure")]
 MESH = "../erodep_1My/vars_40/mesh.npz"
 
 
@@ -55,17 +57,23 @@ def budget(summary="summary_gravity.jsonl"):
     sup = np.array([v[1]["supplied"] for v in g]) * 1e-9
     dep = np.array([v[1]["deposited"] for v in g]) * 1e-9
     exp = np.array([v[1]["exported"] for v in g]) * 1e-9
-    clo = np.abs(sup - dep - exp) / np.maximum(sup, 1e-30)
+    fail = np.array([v[1].get("failed", 0.0) for v in g]) * 1e-9
+    ero = np.array([v[1].get("eroded", 0.0) for v in g]) * 1e-9
+    clo = np.abs(sup + ero - dep - exp) / np.maximum(sup + ero, 1e-30)
     fig, ax = plt.subplots(1, 2, figsize=(11, 3.4), constrained_layout=True)
     ax[0].semilogy(t, sup, color="#2a6fb0", lw=1.8, label="supplied")
     ax[0].semilogy(t, np.maximum(dep, 1e-9), color="#3a9a5b", lw=1.4, ls="--", label="deposited")
+    if fail.any():
+        ax[0].semilogy(t, np.where(fail > 0, fail, np.nan), color="0.35", lw=1.4,
+                       label="failed (slope failure)")
     ax[0].set_xlabel("time (Ma)")
     ax[0].set_ylabel("volume per step (km$^3$)")
     ax[0].legend(frameon=False)
     ax[1].semilogy(t, np.maximum(clo, 1e-16), color="0.3", lw=1.5)
     ax[1].set_xlabel("time (Ma)")
     ax[1].set_ylabel("budget closure")
-    ax[1].set_title("|supplied - deposited - exported| / supplied", fontsize=9)
+    ax[1].set_title("|supplied + failed - deposited - exported| / (supplied + failed)",
+                    fontsize=9)
     for a in ax:
         a.grid(alpha=0.25, lw=0.5)
     return fig
@@ -76,12 +84,13 @@ def _background(ax, lon, lat, elev, s=0.3):
                vmin=0, vmax=1, rasterized=True)
 
 
-def maps(step):
-    """Global maps: gravity deposit (log scale), surface fine fraction where the
-    gravity currents deposited, and the difference of cumulative deposit
-    between the two runs (where the currents moved sediment from and to)."""
-    lon, lat, f = load("sim_gravity", step, ["elev", "gravDep", "surfFineFrac", "erodep"])
-    _, _, f0 = load("sim_nogravity", step, ["erodep"])
+def maps(step, sim="sim_gravity", ref="sim_nogravity", ref_label="without gravity currents"):
+    """Global maps of run ``sim``: gravity deposit (log scale; net removal where
+    slope failure took more than the currents deposited is not shown), surface
+    fine fraction where the gravity currents deposited, and the difference of
+    cumulative deposit with the reference run ``ref``."""
+    lon, lat, f = load(sim, step, ["elev", "gravDep", "surfFineFrac", "erodep"])
+    _, _, f0 = load(ref, step, ["erodep"])
     g = f["gravDep"]
     m = g > 0.5
     fig, ax = plt.subplots(3, 1, figsize=(11, 15), constrained_layout=True)
@@ -105,8 +114,8 @@ def maps(step):
     sc = ax[2].scatter(lon[k], lat[k], c=d[k], s=1, cmap="BrBG",
                        norm=TwoSlopeNorm(0, -100, 100), rasterized=True)
     fig.colorbar(sc, ax=ax[2], label="deposit difference (m)", shrink=0.8)
-    ax[2].set_title("cumulative deposit below 200 m water depth, with minus "
-                    "without gravity currents (brown: less, teal: more)")
+    ax[2].set_title("cumulative deposit below 200 m water depth, minus the run "
+                    f"{ref_label} (brown: less, teal: more)")
     ax[2].set_xlabel("longitude")
     return fig
 
@@ -155,7 +164,7 @@ GLOBAL_FACIES = dict(
 )
 
 
-def sections(step, path, color_by="lithology", ylim=None):
+def sections(step, path, color_by="lithology", ylim=None, runs=RUNS):
     """Stratigraphic sections along ``path`` [(lon, lat), ...] for both runs,
     drawn with ``gospl.analyse.stratasection.cross_section`` (filled layers
     coloured by ``color_by``: ``lithology`` = fine fraction on a common 0-1
@@ -164,9 +173,11 @@ def sections(step, path, color_by="lithology", ylim=None):
     stratigraphy, with the same vertical range in both panels."""
     from gospl.analyse.stratasection import cross_section, load_strata
 
-    fig, ax = plt.subplots(2, 1, figsize=(12, 8), constrained_layout=True)
+    fig, ax = plt.subplots(len(runs), 1, figsize=(12, 4 * len(runs)), squeeze=False,
+                           constrained_layout=True)
+    ax = ax[:, 0]
     kw = GLOBAL_FACIES if color_by == "facies" else {}
-    for a, (sim, lab) in zip(ax, RUNS):
+    for a, (sim, lab) in zip(ax, runs):
         data = load_strata(os.path.join(sim, "h5"), MESH, step=step)
         cross_section(data, path=path, color_by=color_by, ax=a, layer_lines=4,
                       ylim=ylim, legend_loc="lower left", **kw)
