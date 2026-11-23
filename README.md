@@ -21,13 +21,13 @@ goSPL-examples follows goSPL's versions:
 
 | goSPL-examples | goSPL | Install |
 |---|---|---|
-| `dev` branch (this branch) | `dev` branch, unreleased | [`environment.yml`](environment.yml) builds goSPL from the goSPL `dev` branch |
+| `dev` branch | `dev` branch, unreleased | [`environment.yml`](environment.yml) builds goSPL from the goSPL `dev` branch |
 | `main` branch | latest release | `environment.yml` pins the goSPL conda package |
 | tag `vYYYY.M.D` | release `vYYYY.M.D` | the environment of that tag |
 
-Each goSPL release has a goSPL-examples tag with **the same name**: to run the examples that match the goSPL you have installed, check out that tag (for example `git checkout v2026.7.14`). The two oldest tags, `2026.06.08` and `2026.6.13`, predate this convention and have no `v` prefix. At each release, `dev` is merged into `main` and tagged with the goSPL release name.
+Each goSPL release has a goSPL-examples tag with **the same name**: to run the examples that match the goSPL you have installed, check out that tag (for example `git checkout v2026.7.14`). The two oldest tags, `2026.06.08` and `2026.6.13`, predate this convention and have no `v` prefix. At each release, `dev` is merged into `main`, `environment.yml` is pinned to the new release, and `main` is tagged with the goSPL release name.
 
-This `dev` branch needs goSPL `dev`: some examples use options that are not in a release yet (`hillslope_channels`: `diffusion: channelQ`; `plate_mvt`: `domain: interp_remap`; the groundwater-geochemistry examples). The Docker image is built from release tags only, so it carries the latest release, not `dev`.
+Between releases, the `dev` branch needs goSPL `dev`: some examples use options that are not in a release yet (`hillslope_channels`: `diffusion: channelQ`; `plate_mvt`: `domain: interp_remap`; the groundwater-geochemistry examples). The Docker image is built from release tags only, so it carries the latest release, not `dev`.
 
 ## Installation via mamba / micromamba
 
@@ -246,7 +246,7 @@ The `gospl-smoke` environment is already active — same as the Docker image, no
 
 ## Running goSPL-examples
 
-The examples on this `dev` branch target goSPL `dev` (see [`environment.yml`](environment.yml) and [Versions](#versions-branches-and-tags)) and consist of simple local and global models that illustrate the main capabilities of the code. If you are new to goSPL, start with the local example [`stratigraphic_record`](Local-examples/stratigraphic_record) and the global example [`continental_flux`](Global-examples/continental_flux).
+The examples target the goSPL version given by [`environment.yml`](environment.yml): goSPL `dev` on the `dev` branch, the latest release on `main` and on each tag (see [Versions](#versions-branches-and-tags)) and consist of simple local and global models that illustrate the main capabilities of the code. If you are new to goSPL, start with the local example [`stratigraphic_record`](Local-examples/stratigraphic_record) and the global example [`continental_flux`](Global-examples/continental_flux).
 
 A typical run, from an activated environment, builds the inputs in the relevant notebook, then launches the model from a terminal with the `gospl` command, and finally post-processes the outputs in `view_Results.ipynb`:
 
