@@ -15,6 +15,20 @@ _Series of examples to illustrate the functionalities of goSPL._
 
 Full docs are available at: https://gospl.readthedocs.io/en/latest/
 
+## Versions: branches and tags
+
+goSPL-examples follows goSPL's versions:
+
+| goSPL-examples | goSPL | Install |
+|---|---|---|
+| `dev` branch (this branch) | `dev` branch, unreleased | [`environment.yml`](environment.yml) builds goSPL from the goSPL `dev` branch |
+| `main` branch | latest release | `environment.yml` pins the goSPL conda package |
+| tag `vYYYY.M.D` | release `vYYYY.M.D` | the environment of that tag |
+
+Each goSPL release has a goSPL-examples tag with **the same name**: to run the examples that match the goSPL you have installed, check out that tag (for example `git checkout v2026.7.14`). The two oldest tags, `2026.06.08` and `2026.6.13`, predate this convention and have no `v` prefix. At each release, `dev` is merged into `main` and tagged with the goSPL release name.
+
+This `dev` branch needs goSPL `dev`: some examples use options that are not in a release yet (`hillslope_channels`: `diffusion: channelQ`; `plate_mvt`: `domain: interp_remap`; the groundwater-geochemistry examples). The Docker image is built from release tags only, so it carries the latest release, not `dev`.
+
 ## Installation via mamba / micromamba
 
 We strongly recommend **`mamba`** or **`micromamba`** over plain `conda`: they use the fast `libsolv` resolver and reliably solve goSPL's heavy MPI/geospatial stack (the classic conda solver can stall or crash on it).
@@ -127,27 +141,27 @@ After getting Anaconda installed, the user will have already access to some esse
 
 ### Building goSPL-examples environment
 
-The next step consists in downloading the conda environment for goSPL. A conda environment is like a virtualenv that allows you to install a specific flavor of Python and set of libraries. For the latest version (`master` branch) of goSPL, this is done by downloading the ``environment.yml`` `file <https://raw.githubusercontent.com/Geodels/goSPL-examples/master/environment.yml>`_. To do this you can use the ``curl``:
+The next step consists in downloading the conda environment for goSPL. A conda environment is like a virtualenv that allows you to install a specific flavor of Python and set of libraries. For the development version (`dev` branch, which builds goSPL `dev` from GitHub), download the ``environment.yml`` [file](https://raw.githubusercontent.com/Geodels/goSPL-examples/dev/environment.yml); for the latest release, take it from the `main` branch instead (replace `dev` by `main` in the links below). To do this you can use ``curl``:
 
 ```console
-  curl https://raw.githubusercontent.com/Geodels/goSPL-examples/master/environment.yml --output environment.yml
+  curl https://raw.githubusercontent.com/Geodels/goSPL-examples/dev/environment.yml --output environment.yml
 ```
 
 or ``wget`` command:
 
 ```console
-  wget https://raw.githubusercontent.com/Geodels/goSPL-examples/master/environment.yml
+  wget https://raw.githubusercontent.com/Geodels/goSPL-examples/dev/environment.yml
 ```
 
 This will save the file locally under the same name as it was on github: ``environment.yml``.
 
-Alternatively you can get it from your preferred web browser by clicking on the following link: [environment.yml](https://raw.githubusercontent.com/Geodels/goSPL-examples/master/environment.yml) and saving it under the following name ``environment.yml``.
+Alternatively you can get it from your preferred web browser by clicking on the following link: [environment.yml](https://raw.githubusercontent.com/Geodels/goSPL-examples/dev/environment.yml) and saving it under the following name ``environment.yml``.
 
 >  goSPL is not directly packaged as a [Conda](https://conda.pydata.org/docs/) library because some of its dependencies are not available via this installation. The use of the environment file however provides an easy installation approach.
 
-Once the [environment.yml](https://raw.githubusercontent.com/Geodels/goSPL-examples/master/environment.yml) file has been downloaded on your system. The following directives provide a step-by-step guide to create a local conda environment for goSPL.
+Once the [environment.yml](https://raw.githubusercontent.com/Geodels/goSPL-examples/dev/environment.yml) file has been downloaded on your system. The following directives provide a step-by-step guide to create a local conda environment for goSPL.
 
-Navigate to the directory containing the [environment.yml](https://raw.githubusercontent.com/Geodels/goSPL-examples/master/environment.yml) file and create the environment with **`mamba`** (or **`micromamba`**) — these are much faster and more reliable than plain `conda` on goSPL's MPI/geospatial stack:
+Navigate to the directory containing the [environment.yml](https://raw.githubusercontent.com/Geodels/goSPL-examples/dev/environment.yml) file and create the environment with **`mamba`** (or **`micromamba`**) — these are much faster and more reliable than plain `conda` on goSPL's MPI/geospatial stack:
 
 ```console
     mamba env create -f environment.yml       # or:  micromamba create -f environment.yml
@@ -232,7 +246,7 @@ The `gospl-smoke` environment is already active — same as the Docker image, no
 
 ## Running goSPL-examples
 
-The examples provided here target the ``2026.7.14`` goSPL release (see [`environment.yml`](environment.yml)) and consist of simple local and global models that illustrate the main capabilities of the code. If you are new to goSPL, start with the local example [`stratigraphic_record`](Local-examples/stratigraphic_record) and the global example [`continental_flux`](Global-examples/continental_flux).
+The examples on this `dev` branch target goSPL `dev` (see [`environment.yml`](environment.yml) and [Versions](#versions-branches-and-tags)) and consist of simple local and global models that illustrate the main capabilities of the code. If you are new to goSPL, start with the local example [`stratigraphic_record`](Local-examples/stratigraphic_record) and the global example [`continental_flux`](Global-examples/continental_flux).
 
 A typical run, from an activated environment, builds the inputs in the relevant notebook, then launches the model from a terminal with the `gospl` command, and finally post-processes the outputs in `view_Results.ipynb`:
 

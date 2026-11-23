@@ -6,11 +6,28 @@ channels:
 dependencies:
   - python=3.11
   - numpy<2
-  # goSPL itself — pulls numpy/scipy/pandas/h5py(mpi)/hdf5(mpi)/vtk-base/
-  # ruamel.yaml/openmpi/mpi4py/petsc/petsc4py/pyshtools as run-deps, so those
-  # are intentionally NOT listed again here (re-listing bare h5py/hdf5/petsc
-  # can fight goSPL's MPI-pinned builds).
-  - gospl=2026.7.14
+  # goSPL dev branch: not on conda, so goSPL is built from GitHub (pip, at the
+  # end) and its conda run-time dependencies are listed here, with the same
+  # MPI-pinned builds as the goSPL conda package (conda/meta.yaml). The `main`
+  # branch of goSPL-examples pins the latest goSPL release instead.
+  - scipy
+  - numpy-indexed
+  - pandas
+  - h5py=*=mpi_openmpi*
+  - hdf5=*=mpi_openmpi*
+  - vtk-base
+  - ruamel.yaml
+  - openmpi>=4.0,<5.0
+  - mpi4py>=4.0
+  - petsc>=3.21,<3.22
+  - petsc4py>=3.21,<3.22
+  - pyshtools
+  # toolchain to build goSPL's Fortran extension
+  - c-compiler
+  - fortran-compiler
+  - meson-python>=0.15.0
+  - ninja
+  - pkg-config
   # goSPL [analysis] optional extras — NOT in goSPL's conda run-deps, so the
   # analysis tools (gospl-grid/-section/-catchment, provenance) would otherwise
   # hit their try/except fallbacks. matplotlib + netcdf4 also imported directly.
@@ -39,3 +56,5 @@ dependencies:
   - pip
   - pip:
       - perlin-noise
+      # goSPL from the dev branch (see the top of this file)
+      - gospl @ git+https://github.com/Geodels/gospl.git@dev
