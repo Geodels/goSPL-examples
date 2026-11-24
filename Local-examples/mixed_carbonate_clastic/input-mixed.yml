@@ -1,7 +1,7 @@
 # =============================================================================
 # mixed_carbonate_clastic: mixed reference
 #
-# Mixed margin: carbonate on the shelf away from the deltas, stopped where river sediment accumulates.
+# Mixed margin: carbonate on the shelf away from the deltas, stopped where river sediment accumulates and in the turbid plume of the river mud.
 #
 # Reference run: input-mixed.yml (rivers + two carbonate factories whose
 # production stops where river sediment accumulates). This run differs by:
@@ -73,8 +73,11 @@ strata:
 #   ~10 m only (extinction 0.2/m, and none below 30 m).
 # - oligophotic: shelf producers of loose sand and mud (foraminifera,
 #   molluscs, red algae), 0.3 mm/yr, down to ~60 m.
-# Both stop where river sediment accumulates (turbid water and burial
-# near the deltas): the `sedrate` control.
+# Both stop where river sediment accumulates (burial near the deltas,
+# `sedrate`) and in turbid water (`turbidity`: the river mud the marine
+# routing carries through each cell, spread over 10 km): the river
+# load mostly crosses the shallow carbonate belt without settling,
+# so `sedrate` alone sees little of it.
 # -----------------------------------------------------------------------------
 carbonate:
     insolation: 400.           # W/m2: light at the sea surface
@@ -88,6 +91,7 @@ carbonate:
         response:
           - {control: depth, x: [0., 20., 30.], f: [1., 1., 0.]}
           - {control: sedrate, x: [0., 3.e-4], f: [1., 0.]}   # no production where 0.3 mm/yr of river sediment accumulates
+          - {control: turbidity, length: 1.e4, x: [6.e-3, 1.2e-2], f: [1., 0.]}   # no production where the river mud passing by (spread over 10 km) exceeds 12 mm/yr
       - name: oligophotic
         growth: 300.           # m/Myr (0.3 mm/yr)
         extinction: 0.05       # 1/m: less light-dependent
@@ -97,6 +101,7 @@ carbonate:
         response:
           - {control: depth, x: [0., 50., 80.], f: [1., 1., 0.]}
           - {control: sedrate, x: [0., 3.e-4], f: [1., 0.]}   # no production where 0.3 mm/yr of river sediment accumulates
+          - {control: turbidity, length: 1.e4, x: [6.e-3, 1.2e-2], f: [1., 0.]}   # no production where the river mud passing by (spread over 10 km) exceeds 12 mm/yr
 
 output:
     dir: 'sim_mixed'

@@ -123,7 +123,7 @@ carbonate:
         sand: 0.7              # loose part: 70 % sand, 30 % mud
         response:
           - {{control: depth, x: [0., 20., 30.], f: [1., 1., 0.]}}
-{sed_euph}{wave_euph}      - name: oligophotic
+{sed_euph}{turb}{wave_euph}      - name: oligophotic
         growth: 300.           # m/Myr (0.3 mm/yr)
         extinction: 0.05       # 1/m: less light-dependent
         saturation: 60.
@@ -131,11 +131,17 @@ carbonate:
         sand: 0.5              # half carbonate sand, half carbonate mud
         response:
           - {{control: depth, x: [0., 50., 80.], f: [1., 1., 0.]}}
-{sed_olig}"""
+{sed_olig}{turb}"""
 SEDRATE = ("          - {control: sedrate, x: [0., 3.e-4], f: [1., 0.]}   "
            "# no production where 0.3 mm/yr of river sediment accumulates\n")
-CONTROL_ON = ("Both stop where river sediment accumulates (turbid water and burial\n"
-              "# near the deltas): the `sedrate` control.")
+CONTROL_ON = ("Both stop where river sediment accumulates (burial near the deltas,\n"
+              "# `sedrate`){turb_text}")
+TURB_TEXT = (" and in turbid water (`turbidity`: the river mud the marine\n"
+             "# routing carries through each cell, spread over 10 km): the river\n"
+             "# load mostly crosses the shallow carbonate belt without settling,\n"
+             "# so `sedrate` alone sees little of it.")
+TURB = ("          - {control: turbidity, length: 1.e4, x: [6.e-3, 1.2e-2], f: [1., 0.]}   "
+        "# no production where the river mud passing by (spread over 10 km) exceeds 12 mm/yr\n")
 CONTROL_OFF = ("No `sedrate` control here: the factories also grow on the delta\n"
                "# fronts, as if the river sediment did not affect them.")
 WAVE_EUPH = ("          - {control: wave, x: [0., 0.5], f: [0.2, 1.]}   "
@@ -198,9 +204,14 @@ RUNS = {
                   "Carbonates that ignore the river sediment: they grow on the "
                   "delta fronts as well (unrealistic, to show the control).",
                   "no `sedrate` response in the factories."),
+    "sedrate": (True, "sedrate", False, False, "carbonates with the sedrate control only",
+                "Production stopped only where river sediment accumulates "
+                "(burial), not in the turbid plume.",
+                "no `turbidity` response in the factories."),
     "mixed": (True, True, False, False, "mixed reference",
               "Mixed margin: carbonate on the shelf away from the deltas, "
-              "stopped where river sediment accumulates.",
+              "stopped where river sediment accumulates and in the turbid "
+              "plume of the river mud.",
               "nothing (this is the reference)."),
     "waves": (True, True, True, False, "mixed with waves",
               "Waves from the open ocean: the reef builders need wave energy "
@@ -234,9 +245,12 @@ def write_inputs():
     for name, (carb, sed, waves, grav, title, purpose, diff) in RUNS.items():
         carbonate = ""
         if carb:
+            turb = sed is True
             carbonate = CARB.format(
-                control_text=CONTROL_ON if sed else CONTROL_OFF,
+                control_text=(CONTROL_ON.format(turb_text=TURB_TEXT if turb else ".")
+                              if sed else CONTROL_OFF),
                 sed_euph=SEDRATE if sed else "", sed_olig=SEDRATE if sed else "",
+                turb=TURB if turb else "",
                 wave_euph=WAVE_EUPH if waves else "")
         txt = TEMPLATE.format(title=title, purpose=purpose, diff=diff, name=name,
                               carbonate=carbonate, waves=WAVES if waves else "",
