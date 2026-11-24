@@ -100,3 +100,7 @@ Local-examples/mixed_carbonate_clastic/summary_*.jsonl
 Local-examples/carbonate_atoll/sim_*
 Local-examples/carbonate_atoll/log_*.txt
 Local-examples/carbonate_atoll/summary_*.jsonl
+Global-examples/carbonate_global/sim_*
+Global-examples/carbonate_global/log_*.txt
+Global-examples/carbonate_global/summary_*.jsonl
+Global-examples/carbonate_global/data/carb_maps.npz

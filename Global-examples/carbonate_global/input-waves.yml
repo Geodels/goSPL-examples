@@ -1,0 +1,134 @@
+# =============================================================================
+# carbonate_global: waves and coastal erosion
+#
+# The global wind belts make exposed and sheltered coasts: the shallow factory prefers exposed ones, and the waves erode the coasts.
+#
+# Reference run: input-carb.yml (carbonate factories with a sea-surface
+# temperature window, pelagic carbonate and hemipelagic clay). This run
+# differs by: a `waves` block (zonal belts, fetch 500 km), a `wave` response on the shallow factory and a `coastal_erosion` block.
+# =============================================================================
+name: carbonate global, waves and coastal erosion
+
+domain:
+    npdata: ['../continental_flux/vars_25_80/mesh','v','c','z']   # 250 Ma global mesh of continental_flux
+    flowdir: 2
+    seadepo: True
+
+time:
+    start: 250.e6
+    end: 251.e6         # 1 Myr
+    tout: 1.e5          # 10 outputs
+    dt: 5.e4
+    strat: 1.e5         # a stratigraphic layer every output
+
+spl:
+    K: 5.e-6
+    d: 0.42
+    m: 0.5
+
+diffusion:
+    hillslopeKa: 0.5
+    hillslopeKm: 2.0
+    nonlinKm: 1.e4
+    Gmar: 0.5
+    clinSlp: 1.e-5
+    marineSolver: picard
+    picardSub: 10
+    picardIts: 2
+    nlPitK: 5.e3
+    pitInletBias: 0.4
+
+sea:
+    position: 0.
+
+climate:
+  - start: 250.e6
+    map: ['../continental_flux/vars_25_80/rain250','r']   # per-vertex rainfall (m/yr)
+
+strata:
+    dual: True          # river sand and mud, plus the carbonate lithologies
+
+# -----------------------------------------------------------------------------
+# Sea-surface temperature (degC): a map by latitude (data/carb_maps.npz), the
+# `temperature` response of the factories and of the pelagic rain.
+# -----------------------------------------------------------------------------
+sst:
+    events:
+      - {start: 250.e6, map: ['data/carb_maps', 'sst']}
+
+# -----------------------------------------------------------------------------
+# Carbonate production: two factories with the light law
+#   G(w) = growth * tanh(insolation * exp(-extinction * w) / saturation)
+# at a 20-100 km resolution a reef is narrower than a cell: `reef` is the
+# framework share of a cell's carbonate (a margin facies).
+# - shallow: tropical shelves (reefs, green algae, ooids), 0.4 mm/yr, 30 %
+#   framework, only in warm water (no growth below 16 or above 32 degC, full
+#   growth between 18 and 28 degC).
+# - deep: cool-water and deeper loose carbonate (bryozoans, foraminifera,
+#   molluscs), 0.05 mm/yr down to 400 m, at every temperature.
+# The shallow factory grows less on sheltered coasts (wave energy below 0.5).
+# -----------------------------------------------------------------------------
+carbonate:
+    insolation: 400.           # W/m2: light at the sea surface
+    factories:
+      - name: shallow
+        growth: 400.           # m/Myr (0.4 mm/yr)
+        extinction: 0.1        # 1/m: light falls with depth
+        saturation: 60.        # W/m2: light above which the growth no longer increases
+        framework: 0.3         # 30 % built in place (lithology `reef`)
+        sand: 0.6              # loose part: 60 % sand, 40 % mud
+        response:
+          - {control: temperature, x: [16., 18., 28., 32.], f: [0., 1., 1., 0.]}
+          - {control: wave, x: [0., 0.5], f: [0.3, 1.]}   # reef builders prefer exposed coasts
+      - name: deep
+        growth: 50.            # m/Myr (0.05 mm/yr)
+        extinction: 0.005      # 1/m: hardly light-dependent
+        saturation: 60.
+        framework: 0.          # all loose sediment
+        sand: 0.3
+        response:
+          - {control: depth, x: [0., 200., 400.], f: [1., 1., 0.]}
+
+# -----------------------------------------------------------------------------
+# Pelagic rain: carbonate from the surface ocean (data/carb_maps.npz `prod`,
+# m/Myr, high under the equatorial belt), preserved above the lysocline,
+# dissolving linearly down to the carbonate compensation depth (CCD) where
+# none is preserved; and hemipelagic clay (fine) decaying away from the coasts.
+# -----------------------------------------------------------------------------
+pelagic:
+  - start: 250.e6
+    carbonate: ['data/carb_maps', 'prod']   # pelagic carbonate rain (m/Myr)
+    lysocline: 3500.0           # m: dissolution starts below this depth
+    ccd: 4500.0                 # m: carbonate compensation depth
+    clay: 1.                   # hemipelagic clay at the coast (m/Myr)
+    clay_decay: 3.e5           # clay * exp(-d / 300 km) from the coast
+    temperature: {x: [5., 25.], f: [0.3, 1.]}   # less carbonate rain in cold water
+
+# -----------------------------------------------------------------------------
+# Waves: the global wind belts (trade winds from the east within 30 degrees of
+# the equator, westerlies to 60, polar easterlies beyond), growing over a
+# fetch of 500 km of open water and losing their energy in water shallower
+# than 30 m: exposed coasts face the open ocean along the wind, sheltered
+# ones lie behind continents and islands.
+# -----------------------------------------------------------------------------
+waves:
+    climate:
+      - {from: zonal, weight: 1.}
+    fetch: 5.e5                   # growth to full energy over 500 km
+    decay: 1.e7                   # no attenuation in deep water
+    shoal_depth: 30.              # the waves feel the bottom shallower than 30 m
+    shoal_length: 5.e4            # and lose their energy over ~50 km (1-2 cells)
+
+# -----------------------------------------------------------------------------
+# Coastal wave erosion of the shallow seafloor and of low coasts; the eroded
+# reef is moved as carbonate sand.
+# -----------------------------------------------------------------------------
+coastal_erosion:
+    rate: 1.e-4          # m/yr at full wave energy, at sea level
+    depth_scale: 20.     # abrasion decays as exp(-depth / 20 m)
+    cliff_height: 50.    # land up to 50 m above sea level next to the sea
+    max_erosion: 2.      # at most 2 m per step
+    rubble: carb_sand
+
+output:
+    dir: 'sim_waves'

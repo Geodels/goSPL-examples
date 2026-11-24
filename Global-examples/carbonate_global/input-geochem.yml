@@ -1,0 +1,166 @@
+# =============================================================================
+# carbonate_global: coupled to the geochemistry
+#
+# The carbonate is coupled to the continental geochemistry of continental_geochem: the dissolved carbonate delivered by the rivers limits the burial, and its coastal plume favours the shallow factory.
+#
+# Reference run: input-carb.yml (carbonate factories with a sea-surface
+# temperature window, pelagic carbonate and hemipelagic clay). This run
+# differs by: the soil, provenance, groundwater and geochemistry blocks of continental_geochem, a `solute` response on the shallow factory and a `carbonate_supply` block.
+# =============================================================================
+name: carbonate global, coupled to the geochemistry
+
+domain:
+    npdata: ['../continental_flux/vars_25_80/mesh','v','c','z']   # 250 Ma global mesh of continental_flux
+    flowdir: 2
+    seadepo: True
+
+time:
+    start: 250.e6
+    end: 251.e6         # 1 Myr
+    tout: 1.e5          # 10 outputs
+    dt: 5.e4
+    strat: 1.e5         # a stratigraphic layer every output
+
+spl:
+    K: 5.e-6
+    d: 0.42
+    m: 0.5
+
+diffusion:
+    hillslopeKa: 0.5
+    hillslopeKm: 2.0
+    nonlinKm: 1.e4
+    Gmar: 0.5
+    clinSlp: 1.e-5
+    marineSolver: picard
+    picardSub: 10
+    picardIts: 2
+    nlPitK: 5.e3
+    pitInletBias: 0.4
+
+soil:
+    mode: 'regolith'
+    soilK: 8.e-6
+    solver: 'ngmres'
+    pcType: 'hypre'
+    rtol: 1.e-5
+    atol: 1.e-5
+    maxProd: 30.e-6
+    depthProd: 1.0
+    uniform: 0.5
+    tempMap: ['../continental_geochem/geochem_inputs', 'temp']
+    activation: 40.e3
+    tempRef: 15.0
+
+provenance:
+    classes: 3
+    source: ['../continental_geochem/geochem_inputs', 'rock']    # 0 tropical | 1 subtropical | 2 temperate (+3: made in the sea)
+
+sea:
+    position: 0.
+
+climate:
+  - start: 250.e6
+    map: ['../continental_flux/vars_25_80/rain250','r']   # per-vertex rainfall (m/yr)
+
+strata:
+    dual: True          # river sand and mud, plus the carbonate lithologies
+
+# -----------------------------------------------------------------------------
+# Groundwater and geochemistry of continental_geochem: three climate provinces
+# weather iron, carbonate and silica; the dissolved load goes down the rivers
+# to the ocean, where it accumulates (marine_coupling).
+# -----------------------------------------------------------------------------
+groundwater:
+    Ksat: 3.65e4
+    specific_yield: 0.1
+    aquifer_base: 50.0
+    infiltration: 0.005
+    conserve_baseflow: True
+    duricrust:
+        form_rate: 1.0e-4
+        max_thickness: 5.0
+        fringe_depth: 3.0
+        fringe_width: 2.0
+        armor_max: 0.9
+        weathering:
+            mode: prodsoil
+    geochem:
+        conserve: True
+        river_load: True
+        marine_coupling: True
+        weatherability_from: source_class
+        species:
+          - {name: iron,      weatherability_by_class: [1.0, 0.1, 0.0], precip_rate: 1.0}
+          - {name: carbonate, weatherability_by_class: [0.0, 1.0, 0.2], precip_rate: 1.0}
+          - {name: silica,    weatherability_by_class: [0.1, 0.2, 1.0], precip_rate: 0.8}
+
+# -----------------------------------------------------------------------------
+# Sea-surface temperature (degC): a map by latitude (data/carb_maps.npz), the
+# `temperature` response of the factories and of the pelagic rain.
+# -----------------------------------------------------------------------------
+sst:
+    events:
+      - {start: 250.e6, map: ['data/carb_maps', 'sst']}
+
+# -----------------------------------------------------------------------------
+# Carbonate production: two factories with the light law
+#   G(w) = growth * tanh(insolation * exp(-extinction * w) / saturation)
+# at a 20-100 km resolution a reef is narrower than a cell: `reef` is the
+# framework share of a cell's carbonate (a margin facies).
+# - shallow: tropical shelves (reefs, green algae, ooids), 0.4 mm/yr, 30 %
+#   framework, only in warm water (no growth below 16 or above 32 degC, full
+#   growth between 18 and 28 degC).
+# - deep: cool-water and deeper loose carbonate (bryozoans, foraminifera,
+#   molluscs), 0.05 mm/yr down to 400 m, at every temperature.
+# The shallow factory grows more where the rivers bring dissolved carbonate
+# (alkalinity), half its rate far from them (plume of 200 km).
+# -----------------------------------------------------------------------------
+carbonate:
+    insolation: 400.           # W/m2: light at the sea surface
+    factories:
+      - name: shallow
+        growth: 400.           # m/Myr (0.4 mm/yr)
+        extinction: 0.1        # 1/m: light falls with depth
+        saturation: 60.        # W/m2: light above which the growth no longer increases
+        framework: 0.3         # 30 % built in place (lithology `reef`)
+        sand: 0.6              # loose part: 60 % sand, 40 % mud
+        response:
+          - {control: temperature, x: [16., 18., 28., 32.], f: [0., 1., 1., 0.]}
+          - {control: solute, species: carbonate, length: 2.e5, x: [0., 1e-08], f: [0.5, 1.]}   # more growth where the rivers bring carbonate (alkalinity)
+      - name: deep
+        growth: 50.            # m/Myr (0.05 mm/yr)
+        extinction: 0.005      # 1/m: hardly light-dependent
+        saturation: 60.
+        framework: 0.          # all loose sediment
+        sand: 0.3
+        response:
+          - {control: depth, x: [0., 200., 400.], f: [1., 1., 0.]}
+
+# -----------------------------------------------------------------------------
+# Pelagic rain: carbonate from the surface ocean (data/carb_maps.npz `prod`,
+# m/Myr, high under the equatorial belt), preserved above the lysocline,
+# dissolving linearly down to the carbonate compensation depth (CCD) where
+# none is preserved; and hemipelagic clay (fine) decaying away from the coasts.
+# -----------------------------------------------------------------------------
+pelagic:
+  - start: 250.e6
+    carbonate: ['data/carb_maps', 'prod']   # pelagic carbonate rain (m/Myr)
+    lysocline: 3500.0           # m: dissolution starts below this depth
+    ccd: 4500.0                 # m: carbonate compensation depth
+    clay: 1.                   # hemipelagic clay at the coast (m/Myr)
+    clay_decay: 3.e5           # clay * exp(-d / 300 km) from the coast
+    temperature: {x: [5., 25.], f: [0.3, 1.]}   # less carbonate rain in cold water
+
+# -----------------------------------------------------------------------------
+# Supply-limited burial: the carbonate the factories and the pelagic rain bury
+# each step cannot exceed what the dissolved carbonate delivered to the ocean
+# (the marine reservoir of the geochemistry) can make, times a yield.
+# -----------------------------------------------------------------------------
+carbonate_supply:
+    species: carbonate
+    yield: 20.0         # m3 of carbonate per unit of solute
+    pelagic: True        # the pelagic rain shares the supply
+
+output:
+    dir: 'sim_geochem'
