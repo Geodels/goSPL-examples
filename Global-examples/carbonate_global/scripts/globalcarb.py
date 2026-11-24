@@ -309,19 +309,52 @@ def export_grid(sim, out, spacing=0.5, mesh="../continental_flux/vars_25_80/mesh
 
 
 def section(sim, lat, lonlim, title=None, mesh="../continental_flux/vars_25_80/mesh.npz",
-            ylim=None):
+            npts=600):
     """Stratigraphic section along the parallel `lat` between the longitudes
-    `lonlim`, coloured by lithology (river sand yellow, mud grey, carbonate
-    sand light blue, carbonate mud dark blue, reef pink)."""
-    from gospl.analyse.stratasection import cross_section, load_strata
+    `lonlim`, coloured by lithology (river sand yellow, river mud grey,
+    carbonate sand light blue, carbonate mud dark blue, reef pink), drawn
+    twice: (top) at true elevation, from the base of the model to the sea
+    surface; (bottom) flattened on the base of the deposits of the run, i.e.
+    the height of every layer above where the run started, where a few tens
+    of metres of deposits are readable against kilometres of relief."""
+    from matplotlib.colors import BoundaryNorm, ListedColormap
+    from matplotlib.patches import Patch
+    from gospl.analyse import stratasection as ss
 
-    data = load_strata(os.path.join(sim, "h5"), mesh)
-    _, ax = plt.subplots(figsize=(12, 4), constrained_layout=True)
-    # a path between the two ends: the distance (degrees) starts at the
-    # western end (with kind="x" it would start at longitude -180)
-    cross_section(data, path=[(lonlim[0], lat), (lonlim[1], lat)],
-                  color_by="lithologies", ax=ax, ylim=ylim, legend_loc="lower left")
-    ax.set_xlabel("degrees east of %g E along latitude %g" % (lonlim[0], lat))
-    ax.set_title(title or "%s, latitude %g, longitude %g to %g" % (sim, lat, *lonlim),
-                 fontsize=10)
-    return ax
+    data = ss.load_strata(os.path.join(sim, "h5"), mesh)
+    path = [(lonlim[0], lat), (lonlim[1], lat)]
+    xs, ys, dist = ss._transect(data, path=path, npts=npts)
+    iface = ss._fill_nearest(data, data["interfaces"], xs, ys,
+                             ss._interp_layers(data, data["interfaces"], xs, ys))
+    cfld, _, _ = ss.color_field(data, "lithologies")
+    cval = ss._nearest_layers(data, cfld, xs, ys)
+    names, cols, labels = ss._litho_classes(data)
+    cmap = ListedColormap(cols)
+    norm = BoundaryNorm(np.arange(len(cols) + 1) - 0.5, len(cols))
+    lonx = lonlim[0] + dist
+    C = np.ma.masked_invalid(cval.T[:, :-1])
+    fig, ax = plt.subplots(2, 1, figsize=(12, 8), constrained_layout=True)
+    for k, (a, Y) in enumerate(((ax[0], iface), (ax[1], iface - iface[:, :1]))):
+        X = np.broadcast_to(lonx, Y.T.shape)
+        a.pcolormesh(X, Y.T, C, cmap=cmap, norm=norm, shading="flat")
+        a.plot(lonx, Y[:, -1], "k", lw=1.5)
+        if k == 0:
+            a.fill_between(lonx, np.nanmin(Y[:, 0]) - 200.0, Y[:, 0], color="0.85")
+            a.plot(lonx, Y[:, 0], color="0.3", lw=1.5)
+            sl = data.get("sea_level")
+            if sl is not None and np.ndim(sl) == 0:
+                a.axhline(float(sl), color="steelblue", lw=0.8)
+            a.set_ylim(np.nanmin(Y[:, 0]) - 200.0, max(np.nanmax(Y[:, -1]), 0.0) + 200.0)
+            a.set_ylabel("elevation (m)")
+            a.set_title(title or "%s: latitude %g, longitude %g to %g" % (sim, lat, *lonlim),
+                        fontsize=10)
+        else:
+            a.set_ylim(0.0, max(np.nanmax(Y[:, -1]) * 1.1, 1.0))
+            a.set_ylabel("height above the base of the run's deposits (m)")
+            a.set_title("flattened on the base of the deposits (1 Myr)", fontsize=10)
+        a.set_xlim(*lonlim)
+        a.set_xlabel("longitude")
+    present = sorted(set(int(v) for v in np.unique(C.compressed())))
+    ax[1].legend(handles=[Patch(color=cols[i], label=labels[i]) for i in present],
+                 loc="upper right", fontsize=8, frameon=False)
+    return fig
