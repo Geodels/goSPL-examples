@@ -1,0 +1,70 @@
+# =============================================================================
+# carbonate_terraces: subsiding coast, reef only
+#
+# Options test on the subsiding coast: the reef factory alone, without waves or coastal erosion.
+#
+# Reference run: input-res100.yml (100 m, uplift 0.3 mm/yr, reef factory with
+# the wave control, coastal wave erosion). This run differs by: subsidence of 0.3 mm/yr; no waves block (no wave control on the reef) and no coastal erosion.
+# =============================================================================
+name: carbonate terraces, subsiding coast, reef only
+
+domain:
+    npdata: ['data/mesh100','v','c','z']   # strip 12 x 1.6 km at 100 m; planar foundation dipping 5 % offshore
+    bc: 'woww'          # edges N,E,S,W: walls, except the open ocean to the east (o)
+    flowdir: 1          # single flow direction (no rivers to speak of here)
+
+time:
+    start: 0.           # model time 0 = 400 ka
+    end: 4.e5           # 400 kyr: MIS 11 to the present
+    tout: 1.e4          # output every 10 kyr
+    dt: 500.            # time step (the carbonate growth does not depend on it)
+    strat: 5.e3         # a stratigraphic layer every 5 kyr (80 layers)
+
+spl:
+    K: 1.e-12           # river erosion switched off in practice: like Pastier et al.
+    d: 0.               #   (2019), the land is not eroded by rivers here
+    m: 0.5
+
+diffusion:
+    hillslopeKa: 0.     # no creep on land
+    hillslopeKm: 0.01   # marine diffusion of the loose carbonate sediment (m2/yr)
+    nonlinKm: 50.       # transport of fresh marine deposits (m2/yr)
+
+tectonics:
+  - start: 0.
+    end: 4.e5
+    upsub: ['data/mesh100','down']   # subsidence 0.3 mm/yr
+
+sea:
+    position: 0.
+    curve: 'data/sealevel.csv'   # Spratt & Lisiecki (2016), shifted to 0 m at present
+
+climate:
+  - start: 0.
+    uniform: 0.1        # a little rain so that the flow routing is defined
+
+strata:
+    dual: True          # needed by the carbonate lithologies (reef, carb_sand, carb_mud)
+
+# -----------------------------------------------------------------------------
+# Carbonate production: one reef-building factory (Bosscher & Schlager light
+# law), potential growth 6 mm/yr (Pastier et al. 2019 use a potential rate of
+# 10 mm/yr whose effective value stays below ~7 mm/yr), production stopping
+# below 20 m, 80 % built in place as reef framework, the rest loose sand (80 %)
+# and mud.
+# -----------------------------------------------------------------------------
+carbonate:
+    insolation: 400.
+    factories:
+      - name: reef
+        growth: 6000.          # m/Myr (6 mm/yr)
+        extinction: 0.1        # 1/m: light falls with depth
+        saturation: 60.        # W/m2
+        framework: 0.8         # built in place (lithology `reef`)
+        sand: 0.8              # loose part: 80 % sand, 20 % mud
+        response:
+          - {control: depth, x: [0., 15., 20.], f: [1., 1., 0.]}   # no production below 20 m
+          # (no wave control: no waves block in this run)
+
+output:
+    dir: 'sim_sub_reefonly'

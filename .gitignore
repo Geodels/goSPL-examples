@@ -91,3 +91,6 @@ Global-examples/gravity_currents_global/summary_*.jsonl
 Global-examples/gravity_currents_global/scripts/__pycache__
 Local-examples/hillslope_channels/log_*.txt
 Local-examples/hillslope_channels/scripts/__pycache__
+Local-examples/carbonate_terraces/sim_*
+Local-examples/carbonate_terraces/log_*.txt
+Local-examples/carbonate_terraces/summary_*.jsonl

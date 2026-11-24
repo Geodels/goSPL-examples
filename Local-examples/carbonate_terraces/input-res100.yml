@@ -1,0 +1,92 @@
+# =============================================================================
+# carbonate_terraces: reference, 100 m
+#
+# Reef terraces on an uplifting coast: the reference configuration.
+#
+# Reference run: input-res100.yml (100 m, uplift 0.3 mm/yr, reef factory with
+# the wave control, coastal wave erosion). This run differs by: nothing (this is the reference).
+# =============================================================================
+name: carbonate terraces, reference, 100 m
+
+domain:
+    npdata: ['data/mesh100','v','c','z']   # strip 12 x 1.6 km at 100 m; planar foundation dipping 5 % offshore
+    bc: 'woww'          # edges N,E,S,W: walls, except the open ocean to the east (o)
+    flowdir: 1          # single flow direction (no rivers to speak of here)
+
+time:
+    start: 0.           # model time 0 = 400 ka
+    end: 4.e5           # 400 kyr: MIS 11 to the present
+    tout: 1.e4          # output every 10 kyr
+    dt: 500.            # time step (the carbonate growth does not depend on it)
+    strat: 5.e3         # a stratigraphic layer every 5 kyr (80 layers)
+
+spl:
+    K: 1.e-12           # river erosion switched off in practice: like Pastier et al.
+    d: 0.               #   (2019), the land is not eroded by rivers here
+    m: 0.5
+
+diffusion:
+    hillslopeKa: 0.     # no creep on land
+    hillslopeKm: 0.01   # marine diffusion of the loose carbonate sediment (m2/yr)
+    nonlinKm: 50.       # transport of fresh marine deposits (m2/yr)
+
+tectonics:
+  - start: 0.
+    end: 4.e5
+    upsub: ['data/mesh100','up']   # uplift 0.3 mm/yr
+
+sea:
+    position: 0.
+    curve: 'data/sealevel.csv'   # Spratt & Lisiecki (2016), shifted to 0 m at present
+
+climate:
+  - start: 0.
+    uniform: 0.1        # a little rain so that the flow routing is defined
+
+strata:
+    dual: True          # needed by the carbonate lithologies (reef, carb_sand, carb_mud)
+
+# -----------------------------------------------------------------------------
+# Carbonate production: one reef-building factory (Bosscher & Schlager light
+# law), potential growth 6 mm/yr (Pastier et al. 2019 use a potential rate of
+# 10 mm/yr whose effective value stays below ~7 mm/yr), production stopping
+# below 20 m, 80 % built in place as reef framework, the rest loose sand (80 %)
+# and mud.
+# -----------------------------------------------------------------------------
+carbonate:
+    insolation: 400.
+    factories:
+      - name: reef
+        growth: 6000.          # m/Myr (6 mm/yr)
+        extinction: 0.1        # 1/m: light falls with depth
+        saturation: 60.        # W/m2
+        framework: 0.8         # built in place (lithology `reef`)
+        sand: 0.8              # loose part: 80 % sand, 20 % mud
+        response:
+          - {control: depth, x: [0., 15., 20.], f: [1., 1., 0.]}   # no production below 20 m
+          - {control: wave, x: [0., 0.5], f: [0.1, 1.]}   # reef growth needs wave energy: sheltered lagoons grow less
+
+# -----------------------------------------------------------------------------
+# Waves from the open ocean (east), dissipated as the water shallows below
+# 10 m: the reef crest takes the energy, the lagoon behind it is sheltered.
+# -----------------------------------------------------------------------------
+waves:
+    climate:
+      - {from: 90., weight: 1.}   # waves come from the east (the open ocean)
+    decay: 1.e6                   # no attenuation in deep water across the domain
+    shoal_depth: 10.              # the waves feel the bottom shallower than 10 m
+    shoal_length: 500.            # and lose their energy over ~500 m at the shore
+
+# -----------------------------------------------------------------------------
+# Coastal wave erosion (Pastier et al. 2019): the seafloor abraded down to a
+# few metres, cliffs cut back to sea level; the reef framework erodes ten
+# times slower (its k_factor is 0.1).
+# -----------------------------------------------------------------------------
+coastal_erosion:
+    rate: 2.e-3          # m/yr at full wave energy, at sea level
+    depth_scale: 3.      # abrasion decays as exp(-depth / 3 m)
+    cliff_height: 15.    # land up to 15 m above sea level next to the sea is a cliff
+    max_erosion: 2.      # at most 2 m per step
+
+output:
+    dir: 'sim_res100'
