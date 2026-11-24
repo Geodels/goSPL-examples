@@ -1,0 +1,123 @@
+# =============================================================================
+# mixed_carbonate_clastic: mixed with gravity currents
+#
+# Gravity currents carry part of the river load down the slope to the basin floor.
+#
+# Reference run: input-mixed.yml (rivers + two carbonate factories whose
+# production stops where river sediment accumulates). This run differs by:
+# a `gravity` block.
+# =============================================================================
+name: mixed carbonate-clastic margin, mixed with gravity currents
+
+domain:
+    npdata: ['inputs/gospl_mesh','v','c','z']   # 200 x 100 km margin, ~700 m cells
+    bc: 'oooo'          # all edges open
+    flowdir: 5          # multiple flow directions (5 receivers)
+
+time:
+    start: 0.
+    end: 5.e5           # 500 kyr: the whole fall and rise of the sea level
+    tout: 2.e4          # an output every 20 kyr
+    dt: 5.e3            # 5 kyr steps (the carbonate growth does not depend on dt)
+    strat: 5.e3         # a stratigraphic layer every step (100 layers)
+
+# Rivers: the highlands (+260 m, west) are eroded and their sediment is carried
+# to the coast (stream power law E = K (P^d A)^m S).
+spl:
+    K: 4.e-5
+    d: 0.42
+    m: 0.45
+
+diffusion:
+    hillslopeKa: 0.1    # creep on land (m2/yr)
+    hillslopeKm: 0.8    # marine diffusion of the seafloor sediment (m2/yr)
+    nonlinKm: 1000.     # transport of fresh marine deposits (m2/yr)
+    clinSlp: 5.e-4      # maximum slope of the marine deposit top (clinoforms)
+
+flexure:                # the margin flexes under the sediment load
+    method: 'fem'
+    thick: 30.e3
+    rhoc: 2300.0
+    rhoa: 3300.0
+    young: 65e9
+    nu: 0.25
+    bcN: "Mirror"
+    bcE: "0Slope0Shear"
+    bcS: "Mirror"
+    bcW: "0Slope0Shear"
+
+sea:
+    position: 0.
+    curve: 'inputs/sealevel.csv'   # synthetic: +1 m -> -38 m (330 kyr) -> -20 m
+
+climate:
+  - start: 0.
+    map: ['inputs/gospl_mesh','rain']   # 2 m/yr in two wet catchments (y = 25 and 75 km), 0.3 elsewhere
+
+# Two siliciclastic lithologies (river sand and mud) plus, with the carbonate
+# block, the carbonate lithologies (reef, carb_sand, carb_mud).
+strata:
+    dual: True
+    coarse: {phi0: 0.49, z0: 3700.}
+    fine:   {phi0: 0.63, z0: 1960., k_factor: 1.5}
+    bedrock_coarse_frac: 0.6
+    fine_diff_factor: 2.0
+    pitInletBias: {coarse: 0.5, fine: 0.0}
+
+# -----------------------------------------------------------------------------
+# Carbonate production: two factories, both with the light law
+#   G(w) = growth * tanh(insolation * exp(-extinction * w) / saturation)
+# at water depth w.
+# - euphotic: light-dependent reef builders and green algae, 0.5 mm/yr,
+#   half of it built in place as framework (lithology `reef`); in the top
+#   ~10 m only (extinction 0.2/m, and none below 30 m).
+# - oligophotic: shelf producers of loose sand and mud (foraminifera,
+#   molluscs, red algae), 0.3 mm/yr, down to ~60 m.
+# Both stop where river sediment accumulates (turbid water and burial
+# near the deltas): the `sedrate` control.
+# -----------------------------------------------------------------------------
+carbonate:
+    insolation: 400.           # W/m2: light at the sea surface
+    factories:
+      - name: euphotic
+        growth: 500.           # m/Myr (0.5 mm/yr)
+        extinction: 0.2        # 1/m: light falls with depth
+        saturation: 60.        # W/m2: light above which the growth no longer increases
+        framework: 0.5         # half built in place as reef framework
+        sand: 0.7              # loose part: 70 % sand, 30 % mud
+        response:
+          - {control: depth, x: [0., 20., 30.], f: [1., 1., 0.]}
+          - {control: sedrate, x: [0., 3.e-4], f: [1., 0.]}   # no production where 0.3 mm/yr of river sediment accumulates
+      - name: oligophotic
+        growth: 300.           # m/Myr (0.3 mm/yr)
+        extinction: 0.05       # 1/m: less light-dependent
+        saturation: 60.
+        framework: 0.          # all loose sediment
+        sand: 0.5              # half carbonate sand, half carbonate mud
+        response:
+          - {control: depth, x: [0., 50., 80.], f: [1., 1., 0.]}
+          - {control: sedrate, x: [0., 3.e-4], f: [1., 0.]}   # no production where 0.3 mm/yr of river sediment accumulates
+
+# -----------------------------------------------------------------------------
+# Gravity currents (as in the gravity_currents example): part of the river
+# load reaching the sea runs down the slope and is deposited at its toe and on
+# the basin floor, beyond the clinoforms.
+# -----------------------------------------------------------------------------
+gravity:
+    fraction: 0.3         # 30 % of the river load reaching the sea
+    coarse_factor: 0.3    # mostly the suspended load (coarse diverted 0.3 x fraction)
+    runout: 1.e4          # run-out of the coarse load (m)
+    runout_fine: 2.e4     # run-out of the fine load (m)
+    bypass_slope: 0.01    # less deposition on gradients steeper than 0.01
+    receivers: 2          # coarse: concentrated network (channel belts)
+    flow_exp: 4.
+    receivers_fine: 6     # fine: spreading network (lobes)
+    flow_exp_fine: 1.
+    network_smooth: 3
+    slope_smooth: 3
+    deposit_spread: 1500.
+    failure_slope: 0.02   # slope failure of fresh deposits steeper than 0.02
+    max_failure: 10.
+
+output:
+    dir: 'sim_gravity'

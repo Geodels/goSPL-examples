@@ -94,3 +94,6 @@ Local-examples/hillslope_channels/scripts/__pycache__
 Local-examples/carbonate_terraces/sim_*
 Local-examples/carbonate_terraces/log_*.txt
 Local-examples/carbonate_terraces/summary_*.jsonl
+Local-examples/mixed_carbonate_clastic/sim_*
+Local-examples/mixed_carbonate_clastic/log_*.txt
+Local-examples/mixed_carbonate_clastic/summary_*.jsonl
