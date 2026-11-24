@@ -32,6 +32,7 @@ rises, stays put or sinks, after the numerical experiments of Pastier et al.
 | `input-sub_reefonly.yml` | 100 m | subsidence | no | no | options: the factories alone |
 | `input-sub_waves.yml` | 100 m | subsidence | yes | no | options: the wave control without erosion |
 | `input-erosion10.yml` | 100 m | uplift | yes | 10 mm/yr | coastal erosion strength |
+| `input-sub_erosion10.yml` | 100 m | subsidence | yes | 10 mm/yr | coastal erosion strength, subsiding coast |
 
 The options are compared on the subsiding coast, where they matter: on the
 uplifting coast each reef is lifted out of the sea within one highstand, so the
@@ -39,7 +40,10 @@ wave control and the erosion change little there. Without waves the subsiding
 reef fills its whole accommodation and ends as one flat platform at sea level;
 with the wave control the sheltered interior grows slowly and an ~80 m deep
 lagoon, floored by platform sand and mud, opens behind a barrier reef. The coastal erosion at 2 mm/yr hardly
-changes the subsiding profile, while at 10 mm/yr it cuts the emerged terraces
+changes the subsiding profile (the reef grows back faster than it is cut, and
+no old reef stays above sea level to be cut as a cliff); at 10 mm/yr its
+rubble builds a carbonate sand apron that moves the subsiding platform
+margin 500 m seaward. On the uplifting coast 10 mm/yr cuts the emerged terraces
 of the uplifting coast, and its rubble (carbonate sand) builds the fore-reef
 out.
 
@@ -80,6 +84,16 @@ differs from the reference.
   on light and without wave control, and makes only loose sediment (half
   sand, half mud): it fills the fore-reef slope and the lagoon floors. The
   loose carbonate is spread by the marine transport.
+
+  The light law of each factory is `G(w) = growth * tanh(insolation *
+  exp(-extinction * w) / saturation)` at water depth `w`: `insolation` is the
+  light at the sea surface (W/m2), `extinction` how fast the light fades with
+  depth (1/m, Beer-Lambert; clear tropical water 0.04 to 0.16), and
+  `saturation` the light above which more light no longer speeds the growth
+  (W/m2). Growth falls to half its potential where `insolation *
+  exp(-extinction * w) / saturation` is about 0.55: here near 25 m for the reef
+  (`extinction: 0.1`) and 50 m for the platform factory (0.05). The `depth`
+  tables then stop the production (below 20 m and 60 m).
 - **`waves`**: waves from the east, losing their energy as the water shallows
   below 10 m: the reef crest takes the energy, the lagoon behind it is
   sheltered.
@@ -93,7 +107,7 @@ differs from the reference.
 
 ```bash
 python scripts/make_inputs.py   # meshes, uplift maps, sea-level curve, input files
-./run_all.sh                    # the eight runs (4 MPI ranks each)
+./run_all.sh                    # the nine runs (4 MPI ranks each)
 ```
 
 Then open `view_Results.ipynb`: sea-level forcing, profiles through time,

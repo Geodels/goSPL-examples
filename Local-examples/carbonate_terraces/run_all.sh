@@ -8,3 +8,4 @@ run res100 & run res200 & wait
 run res050 & run stationary & wait
 run subsidence & run sub_reefonly & wait
 run sub_waves & run erosion10 & wait
+run sub_erosion10

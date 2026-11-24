@@ -140,12 +140,12 @@ strata:
 #   Without wave control, so they also thrive in sheltered water.
 # -----------------------------------------------------------------------------
 carbonate:
-    insolation: 400.
+    insolation: 400.        # W/m2: light at the sea surface (G = growth * tanh(I0 exp(-extinction w) / saturation))
     factories:
       - name: reef
         growth: 6000.          # m/Myr (6 mm/yr)
         extinction: 0.1        # 1/m: light falls with depth
-        saturation: 60.        # W/m2
+        saturation: 60.        # W/m2: light above which the growth no longer increases
         framework: 0.8         # built in place (lithology `reef`)
         sand: 0.8              # loose part: 80 % sand, 20 % mud
         response:
@@ -154,7 +154,7 @@ carbonate:
       - name: platform
         growth: 1000.          # m/Myr (1 mm/yr)
         extinction: 0.05       # 1/m: less light-dependent than the reef
-        saturation: 60.        # W/m2
+        saturation: 60.        # W/m2: light above which the growth no longer increases
         framework: 0.          # all loose sediment
         sand: 0.5              # half carbonate sand, half carbonate mud
         response:
@@ -226,6 +226,11 @@ RUNS = {
                   "Erosion test: the reference coast with coastal erosion five "
                   "times stronger (10 mm/yr at full wave energy).",
                   "coastal erosion rate 1.e-2 m/yr instead of 2.e-3."),
+    "sub_erosion10": (100, "down", True, "1.e-2", "subsiding coast, stronger erosion",
+                      "Erosion test on the subsiding coast: coastal erosion five "
+                      "times stronger than in input-subsidence.yml.",
+                      "subsidence of 0.3 mm/yr; coastal erosion rate 1.e-2 m/yr "
+                      "instead of 2.e-3."),
 }
 TECTO = {"up": "uplift 0.3 mm/yr", "zero": "no vertical motion",
          "down": "subsidence 0.3 mm/yr"}
