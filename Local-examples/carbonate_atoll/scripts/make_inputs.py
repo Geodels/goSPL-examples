@@ -126,29 +126,33 @@ strata:
 # -----------------------------------------------------------------------------
 # Carbonate production: two factories with the light law
 #   G(w) = growth * tanh(insolation * exp(-extinction * w) / saturation)
-# - reef: reef builders, 4 mm/yr, none below 25 m, 80 % built in place as
-#   framework;{wave_text} they stop in the turbid water of the
-#   island's rivers (turbidity plume of the river mud, 1 km).
+# - reef: reef builders, 4 mm/yr, none below 25 m, 60 % built in place as
+#   framework, the rest loose sand and mud; they grow on rims and highs,
+#   not on a lagoon floor (open-water index over 300 m: 5 % of their growth
+#   where the seafloor is not above its surroundings);{wave_text}
 # - lagoon: loose sand and mud producers (foraminifera, molluscs, algae),
-#   0.2 mm/yr down to 50 m, no framework, everywhere.
-# Behind a reef rim the sheltered water produces much less than the
-# subsidence (0.2 + 2 % of 4 = 0.28 mm/yr against 0.5), so a lagoon deepens
-# there once the summit has drowned.
+#   0.4 mm/yr down to 50 m, no framework, everywhere.
+# A lagoon floor produces 0.4 mm/yr plus at most 5 % of the reef growth,
+# less than the 0.5 mm/yr subsidence, so once the summit has drowned the
+# lagoon deepens behind the rim. (A control on the wave energy alone does not
+# open a lagoon: a deeper lagoon lets more energy through, the reef in it
+# grows faster and keeps up.)
 # -----------------------------------------------------------------------------
 carbonate:
     insolation: 400.           # W/m2: light at the sea surface
+    exposure_length: 300.      # open-water index over 300 m (3 cells): rims > 0, lagoon floor ~0
     factories:
       - name: reef
         growth: 4000.          # m/Myr (4 mm/yr)
         extinction: 0.1        # 1/m: light falls with depth
         saturation: 60.        # W/m2: light above which the growth no longer increases
-        framework: 0.8         # built in place (lithology `reef`)
+        framework: 0.6         # built in place (lithology `reef`)
         sand: 0.8              # loose part: 80 % sand, 20 % mud
         response:
           - {{control: depth, x: [0., 15., 25.], f: [1., 1., 0.]}}
-          - {{control: turbidity, length: 1.e3, x: [0., 1.e-3], f: [1., 0.]}}   # no reef where 1 mm/yr of river mud passes
+          - {{control: exposure, x: [0., 3.], f: [0.05, 1.]}}   # reef on rims and highs, not on the lagoon floor
 {wave_resp}      - name: lagoon
-        growth: 200.           # m/Myr (0.2 mm/yr): less than the subsidence
+        growth: 400.           # m/Myr (0.4 mm/yr): less than the subsidence
         extinction: 0.05       # 1/m: less light-dependent
         saturation: 60.
         framework: 0.          # all loose sediment
@@ -162,8 +166,8 @@ output:
 
 WAVE_RESP = ("          - {control: wave, x: [0., 0.5], f: [0.02, 1.]}   "
              "# reef builders need wave energy: sheltered water grows less\n")
-WAVE_TEXT = ("\n#   they need wave energy (2 % of their growth in sheltered water);")
-NOWAVE_TEXT = ("\n#   no wave control here;")
+WAVE_TEXT = ("\n#   and they need wave energy (2 % of their growth in sheltered water).")
+NOWAVE_TEXT = ("\n#   no wave control here.")
 
 WAVES = """
 # -----------------------------------------------------------------------------

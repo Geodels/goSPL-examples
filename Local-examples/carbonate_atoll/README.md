@@ -3,19 +3,20 @@
 A volcanic island sinks while reef builders grow around it: Darwin's sequence
 from a fringing reef to a barrier reef and an atoll. The reef builders need
 wave energy, so the wave climate decides where the reef rim grows. The example
-uses goSPL's carbonate module (`carbonate:`), wave energy (`waves:`), coastal
-erosion (`coastal_erosion:`) and the turbidity control, on the
-`feat/carbonates` branch of goSPL.
+uses goSPL's carbonate module (`carbonate:`), wave energy (`waves:`), the
+open-water index (`exposure`) and coastal erosion (`coastal_erosion:`), on
+the `feat/carbonates` branch of goSPL.
 
 ## What it shows
 
 - **Darwin's sequence**: with waves from every direction, a reef rim grows
   around the sinking island and keeps up with the subsidence; once the summit
-  drowns (~300 kyr) a rim and a lagoon remain.
+  drowns (~300 kyr) a lagoon opens behind the rim.
 - **The control of the wave direction**: with one prevailing direction (trade
   winds from the east) only the windward side and the flanks get wave energy;
-  the island shadows its lee, the leeward reef grows slowly and drowns, and the
-  result is a windward crescent. Two directions give a horseshoe.
+  the island shadows its lee, the leeward margin has no reef and drowns, and
+  the result is a windward crescent reef in front of a sand platform. Two
+  directions give reef rims facing both swells.
 - **What refraction and coastal erosion change**: refraction turns the waves
   towards the shore on the flanks but cannot reach the shadow (the wave model
   has no diffraction); coastal erosion turns reef into sand that fills part of
@@ -29,12 +30,12 @@ erosion (`coastal_erosion:`) and the turbidity control, on the
 | Input | Waves | Refraction | Coastal erosion | Sea level | Result (600 kyr) |
 |---|---|---|---|---|---|
 | `input-nowaves.yml` | none | | | constant | flat platform at sea level, no lagoon |
-| `input-ring.yml` | 8 directions, equal | no | no | constant | rim all around, lagoon 7-8 m deep |
-| `input-east.yml` | east (trade winds) | no | no | constant | windward crescent, lee drowned (centre -140 m) |
-| `input-season.yml` | east 70 %, SSW 30 % | no | no | constant | horseshoe open to the north-west |
-| `input-refraction.yml` | east | yes | no | constant | as `east` (6.5 against 6.6 km2 of reef flat) |
-| `input-erosion.yml` | east | no | yes (rubble) | constant | lagoon partly filled with sand (centre -98 m), 20 % more framework |
-| `input-sealevel.yml` | east | no | no | Spratt & Lisiecki | drowned atoll (highest point -66 m) |
+| `input-ring.yml` | 8 directions, equal | no | no | constant | reef rim all around, lagoon 18 m deep at the centre |
+| `input-east.yml` | east (trade winds) | no | no | constant | windward crescent reef, sand platform, leeward margin drowned (to -106 m) |
+| `input-season.yml` | east 70 %, SSW 30 % | no | no | constant | rims facing both swells, interior kept up, north-west margin lagging |
+| `input-refraction.yml` | east | yes | no | constant | as `east` |
+| `input-erosion.yml` | east | no | yes (rubble) | constant | as `east`, the drowned lee half filled with sand (to -58 m) |
+| `input-sealevel.yml` | east | no | no | Spratt & Lisiecki | drowned atoll (highest point -67 m) |
 
 Every input file is generated from one commented template by
 `scripts/make_inputs.py`; its header says what the run tests and how it
@@ -59,15 +60,21 @@ differs from the others.
 - **`carbonate`**: two factories with the light law of Bosscher & Schlager
   (1992), `G(w) = growth * tanh(insolation * exp(-extinction * w) /
   saturation)` at water depth `w`.
-  - `reef`: 4 mm/yr, none below 25 m, 80 % built in place as framework; a
-    `wave` response (2 % of the growth where the wave energy is 0, full growth
-    above 0.5) and a `turbidity` response (no growth in the plume of the
-    island's river mud, 1 km).
-  - `lagoon`: loose sand and mud, 0.2 mm/yr down to 50 m, everywhere.
-  - Behind a reef rim the sheltered water produces 0.28 mm/yr at most, less
-    than the 0.5 mm/yr subsidence: that is what lets a lagoon deepen. If the
-    interior produced as much as the subsidence, it would keep up and the
-    platform would stay flat (as in `input-nowaves.yml`).
+  - `reef`: 4 mm/yr, none below 25 m, 60 % built in place as framework,
+    the rest loose sand and mud. A `wave` response (2 % of the growth where
+    the wave energy is 0, full growth above 0.5) and an `exposure` response
+    (the open-water index over 300 m: full growth on rims and highs, 5 % where
+    the seafloor is not above its surroundings, as on a lagoon floor).
+  - `lagoon`: loose sand and mud, 0.4 mm/yr down to 50 m, everywhere.
+  - A lagoon opens only where the sheltered interior produces less than the
+    subsidence (here 0.4 mm/yr plus a few percent of the reef growth against
+    0.5 mm/yr). A control on the wave energy alone does not do it: a deeper
+    lagoon dissipates less, more energy reaches its floor, the reef grows
+    faster there and keeps up (the lagoon stayed ~8 m deep in every such
+    test). The open-water index caps the reef on a lagoon floor whatever the
+    waves bring, so the lagoon can deepen. Its length must be shorter than
+    the lagoon: over 1 km it reaches the steep flanks of this small atoll and
+    the whole atoll looks like a margin.
 - **`waves`**: the wave climate (one or several directions with weights);
   the waves lose their energy where the water is shallower than 10 m, over
   ~300 m. Land and shallow reef flats cast a shadow downwind.
@@ -96,8 +103,9 @@ lithologies --tout 2.e4` (see the `mixed_carbonate_clastic` README).
 - *Another island*: `ZTOP`, `SLOPE` and `SUB` in `scripts/make_inputs.py` (a
   higher island or slower subsidence delays the atoll stage).
 - *A deeper or shallower lagoon*: the lagoon deepens at the subsidence rate
-  minus what the sheltered water produces (`lagoon: growth` plus the sheltered
-  share of the reef, the first `f` of the `wave` table).
+  minus what its floor produces (`lagoon: growth` plus the reef share allowed
+  by the first `f` of the `exposure` table) and minus the sand shed from the
+  rim; `exposure_length` should be a few cells, shorter than the lagoon.
 - *Reefs that keep up with the glacial sea level*: start on a shallower
   platform, or widen the reef's depth window (the `depth` table); a faster
   reef alone does not help (10 mm/yr still drowns at -43 m), because the reef

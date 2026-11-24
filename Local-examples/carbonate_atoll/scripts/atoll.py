@@ -117,11 +117,15 @@ def compare(sims, labels, field="reef"):
                 continue
         else:
             im = _map(a, xy, g["elev"], lab, "terrain", cbar=False, vmin=-150, vmax=150)
-        _coast(a, xy, g["elev"], -10.0, colors="c", linewidths=0.6)
+        _coast(a, xy, g["elev"], -10.0, colors="c", linewidths=1.8)
         a.set_xlabel("x (km)")
     lab = {"reef": "reef thickness (m)", "waveE": "relative wave energy",
            "elev": "elevation (m)"}[field]
-    fig.colorbar(im, ax=ax, label=lab + "  (cyan: -10 m)", shrink=0.8)
+    fig.colorbar(im, ax=ax, label=lab, shrink=0.8)
+    from matplotlib.lines import Line2D
+    np.atleast_1d(ax)[0].legend(
+        handles=[Line2D([], [], color="c", lw=1.8, label="10 m depth contour")],
+        loc="lower left", fontsize=8, framealpha=0.8)
     return fig
 
 
