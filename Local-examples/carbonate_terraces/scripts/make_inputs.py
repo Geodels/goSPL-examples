@@ -2,7 +2,7 @@
 Build the inputs of the carbonate_terraces example.
 
 - data/mesh{50,100,200}.npz: a cross-shore strip (12 km x 1.6 km) at 50, 100 and
-  200 m spacing, triangulated from a square lattice, with
+  200 m spacing, an equilateral triangle lattice (see strip), with
     v      vertex coordinates (m), c  triangles,
     z      initial elevation: a planar foundation dipping 5 % offshore, from
            +200 m on the land side (x = 0) to -400 m offshore (x = 12 km),
@@ -31,18 +31,30 @@ DURATION = 400.0e3                  # yr
 
 
 def strip(dx):
-    nx, ny = int(round(LX / dx)) + 1, int(round(LY / dx)) + 1
-    X, Y = np.meshgrid(np.arange(nx) * dx, np.arange(ny) * dx)
-    x, y = X.ravel(), Y.ravel()
-    cells = []
-    for j in range(ny - 1):
-        for i in range(nx - 1):
-            a = j * nx + i
-            cells += [[a, a + 1, a + nx + 1], [a, a + nx + 1, a + nx]]
+    """Equilateral triangles: rows of nodes ``dx`` apart, every other row
+    shifted by dx/2, plus the nodes on the land and ocean edges, triangulated
+    by Delaunay. Do not split a square lattice along one diagonal: each node
+    then has neighbours along that diagonal only, and the marine routing of
+    the loose sediment leans towards it (the deposits pile up against one
+    side wall). The number of row gaps is even, so the lattice is symmetric
+    about the centre line y = LY / 2."""
+    from scipy.spatial import Delaunay
+
+    nrow = 2 * int(round(LY / (dx * np.sqrt(3.0)))) + 1
+    ys = np.linspace(0.0, LY, nrow)
+    pts = []
+    for j, y in enumerate(ys):
+        x = np.arange(0.0, LX + 1.0, dx)
+        if j % 2:
+            x = np.concatenate([[0.0], x[:-1] + 0.5 * dx, [LX]])
+        pts.append(np.column_stack([x, np.full(x.size, y)]))
+    xy = np.vstack(pts)
+    cells = Delaunay(xy).simplices
+    x = xy[:, 0]
     z = ZTOP - SLOPE * x
     n = x.size
     np.savez(os.path.join(HERE, "data", "mesh%d" % int(dx)),
-             v=np.column_stack([x, y, np.zeros(n)]), c=np.array(cells, dtype=np.int64),
+             v=np.column_stack([xy, np.zeros(n)]), c=cells.astype(np.int64),
              z=z, up=np.full(n, RATE), zero=np.zeros(n), down=np.full(n, -RATE))
     return n
 
@@ -117,11 +129,15 @@ strata:
     dual: True          # needed by the carbonate lithologies (reef, carb_sand, carb_mud)
 
 # -----------------------------------------------------------------------------
-# Carbonate production: one reef-building factory (Bosscher & Schlager light
-# law), potential growth 6 mm/yr (Pastier et al. 2019 use a potential rate of
-# 10 mm/yr whose effective value stays below ~7 mm/yr), production stopping
-# below 20 m, 80 % built in place as reef framework, the rest loose sand (80 %)
-# and mud.
+# Carbonate production: two factories (Bosscher & Schlager light law each).
+# - reef: the reef builders, potential growth 6 mm/yr (Pastier et al. 2019 use
+#   a potential rate of 10 mm/yr whose effective value stays below ~7 mm/yr),
+#   production stopping below 20 m, 80 % built in place as reef framework, the
+#   rest loose sand (80 %) and mud.
+# - platform: the loose-sediment producers of the lagoon and the fore-reef
+#   (calcareous algae, foraminifera, molluscs), slower (1 mm/yr), less
+#   dependent on light, down to 60 m, no framework: half sand, half mud.
+#   Without wave control, so they also thrive in sheltered water.
 # -----------------------------------------------------------------------------
 carbonate:
     insolation: 400.
@@ -135,6 +151,14 @@ carbonate:
         response:
           - {{control: depth, x: [0., 15., 20.], f: [1., 1., 0.]}}   # no production below 20 m
 {wave_response}
+      - name: platform
+        growth: 1000.          # m/Myr (1 mm/yr)
+        extinction: 0.05       # 1/m: less light-dependent than the reef
+        saturation: 60.        # W/m2
+        framework: 0.          # all loose sediment
+        sand: 0.5              # half carbonate sand, half carbonate mud
+        response:
+          - {{control: depth, x: [0., 40., 60.], f: [1., 1., 0.]}}   # no production below 60 m
 {waves}{coast}
 output:
     dir: 'sim_{name}'
@@ -158,13 +182,15 @@ COAST = """
 # -----------------------------------------------------------------------------
 # Coastal wave erosion (Pastier et al. 2019): the seafloor abraded down to a
 # few metres, cliffs cut back to sea level; the reef framework erodes ten
-# times slower (its k_factor is 0.1).
+# times slower (its k_factor is 0.1). The eroded reef is broken into rubble:
+# it is moved and deposited as carbonate sand.
 # -----------------------------------------------------------------------------
 coastal_erosion:
     rate: {erate}          # m/yr at full wave energy, at sea level
     depth_scale: 3.      # abrasion decays as exp(-depth / 3 m)
     cliff_height: 15.    # land up to 15 m above sea level next to the sea is a cliff
     max_erosion: 2.      # at most 2 m per step
+    rubble: carb_sand    # eroded reef framework is routed as carbonate sand
 """
 
 RUNS = {
@@ -187,12 +213,12 @@ RUNS = {
                    "reefs and lagoons, older reefs drowned). Also the full-options "
                    "run of the options test on this coast.",
                    "subsidence of 0.3 mm/yr."),
-    "sub_reefonly": (100, "down", False, None, "subsiding coast, reef only",
-                     "Options test on the subsiding coast: the reef factory alone, "
-                     "without waves or coastal erosion.",
+    "sub_reefonly": (100, "down", False, None, "subsiding coast, no waves",
+                     "Options test on the subsiding coast: the carbonate factories "
+                     "alone, without waves or coastal erosion.",
                      "subsidence of 0.3 mm/yr; no waves block (no wave control on "
                      "the reef) and no coastal erosion."),
-    "sub_waves": (100, "down", True, None, "subsiding coast, reef + waves",
+    "sub_waves": (100, "down", True, None, "subsiding coast, waves",
                   "Options test on the subsiding coast: the wave control on the "
                   "reef factory, without coastal erosion.",
                   "subsidence of 0.3 mm/yr; no coastal erosion."),

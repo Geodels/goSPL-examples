@@ -47,11 +47,15 @@ strata:
     dual: True          # needed by the carbonate lithologies (reef, carb_sand, carb_mud)
 
 # -----------------------------------------------------------------------------
-# Carbonate production: one reef-building factory (Bosscher & Schlager light
-# law), potential growth 6 mm/yr (Pastier et al. 2019 use a potential rate of
-# 10 mm/yr whose effective value stays below ~7 mm/yr), production stopping
-# below 20 m, 80 % built in place as reef framework, the rest loose sand (80 %)
-# and mud.
+# Carbonate production: two factories (Bosscher & Schlager light law each).
+# - reef: the reef builders, potential growth 6 mm/yr (Pastier et al. 2019 use
+#   a potential rate of 10 mm/yr whose effective value stays below ~7 mm/yr),
+#   production stopping below 20 m, 80 % built in place as reef framework, the
+#   rest loose sand (80 %) and mud.
+# - platform: the loose-sediment producers of the lagoon and the fore-reef
+#   (calcareous algae, foraminifera, molluscs), slower (1 mm/yr), less
+#   dependent on light, down to 60 m, no framework: half sand, half mud.
+#   Without wave control, so they also thrive in sheltered water.
 # -----------------------------------------------------------------------------
 carbonate:
     insolation: 400.
@@ -65,6 +69,14 @@ carbonate:
         response:
           - {control: depth, x: [0., 15., 20.], f: [1., 1., 0.]}   # no production below 20 m
           - {control: wave, x: [0., 0.5], f: [0.1, 1.]}   # reef growth needs wave energy: sheltered lagoons grow less
+      - name: platform
+        growth: 1000.          # m/Myr (1 mm/yr)
+        extinction: 0.05       # 1/m: less light-dependent than the reef
+        saturation: 60.        # W/m2
+        framework: 0.          # all loose sediment
+        sand: 0.5              # half carbonate sand, half carbonate mud
+        response:
+          - {control: depth, x: [0., 40., 60.], f: [1., 1., 0.]}   # no production below 60 m
 
 # -----------------------------------------------------------------------------
 # Waves from the open ocean (east), dissipated as the water shallows below
@@ -80,13 +92,15 @@ waves:
 # -----------------------------------------------------------------------------
 # Coastal wave erosion (Pastier et al. 2019): the seafloor abraded down to a
 # few metres, cliffs cut back to sea level; the reef framework erodes ten
-# times slower (its k_factor is 0.1).
+# times slower (its k_factor is 0.1). The eroded reef is broken into rubble:
+# it is moved and deposited as carbonate sand.
 # -----------------------------------------------------------------------------
 coastal_erosion:
     rate: 2.e-3          # m/yr at full wave energy, at sea level
     depth_scale: 3.      # abrasion decays as exp(-depth / 3 m)
     cliff_height: 15.    # land up to 15 m above sea level next to the sea is a cliff
     max_erosion: 2.      # at most 2 m per step
+    rubble: carb_sand    # eroded reef framework is routed as carbonate sand
 
 output:
     dir: 'sim_res100'

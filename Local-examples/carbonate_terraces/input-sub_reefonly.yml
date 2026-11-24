@@ -1,12 +1,12 @@
 # =============================================================================
-# carbonate_terraces: subsiding coast, reef only
+# carbonate_terraces: subsiding coast, no waves
 #
-# Options test on the subsiding coast: the reef factory alone, without waves or coastal erosion.
+# Options test on the subsiding coast: the carbonate factories alone, without waves or coastal erosion.
 #
 # Reference run: input-res100.yml (100 m, uplift 0.3 mm/yr, reef factory with
 # the wave control, coastal wave erosion). This run differs by: subsidence of 0.3 mm/yr; no waves block (no wave control on the reef) and no coastal erosion.
 # =============================================================================
-name: carbonate terraces, subsiding coast, reef only
+name: carbonate terraces, subsiding coast, no waves
 
 domain:
     npdata: ['data/mesh100','v','c','z']   # strip 12 x 1.6 km at 100 m; planar foundation dipping 5 % offshore
@@ -47,11 +47,15 @@ strata:
     dual: True          # needed by the carbonate lithologies (reef, carb_sand, carb_mud)
 
 # -----------------------------------------------------------------------------
-# Carbonate production: one reef-building factory (Bosscher & Schlager light
-# law), potential growth 6 mm/yr (Pastier et al. 2019 use a potential rate of
-# 10 mm/yr whose effective value stays below ~7 mm/yr), production stopping
-# below 20 m, 80 % built in place as reef framework, the rest loose sand (80 %)
-# and mud.
+# Carbonate production: two factories (Bosscher & Schlager light law each).
+# - reef: the reef builders, potential growth 6 mm/yr (Pastier et al. 2019 use
+#   a potential rate of 10 mm/yr whose effective value stays below ~7 mm/yr),
+#   production stopping below 20 m, 80 % built in place as reef framework, the
+#   rest loose sand (80 %) and mud.
+# - platform: the loose-sediment producers of the lagoon and the fore-reef
+#   (calcareous algae, foraminifera, molluscs), slower (1 mm/yr), less
+#   dependent on light, down to 60 m, no framework: half sand, half mud.
+#   Without wave control, so they also thrive in sheltered water.
 # -----------------------------------------------------------------------------
 carbonate:
     insolation: 400.
@@ -65,6 +69,14 @@ carbonate:
         response:
           - {control: depth, x: [0., 15., 20.], f: [1., 1., 0.]}   # no production below 20 m
           # (no wave control: no waves block in this run)
+      - name: platform
+        growth: 1000.          # m/Myr (1 mm/yr)
+        extinction: 0.05       # 1/m: less light-dependent than the reef
+        saturation: 60.        # W/m2
+        framework: 0.          # all loose sediment
+        sand: 0.5              # half carbonate sand, half carbonate mud
+        response:
+          - {control: depth, x: [0., 40., 60.], f: [1., 1., 0.]}   # no production below 60 m
 
 output:
     dir: 'sim_sub_reefonly'

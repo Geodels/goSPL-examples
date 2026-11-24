@@ -29,7 +29,7 @@ rises, stays put or sinks, after the numerical experiments of Pastier et al.
 | `input-res200.yml` | 200 m | uplift | yes | 2 mm/yr | resolution |
 | `input-stationary.yml` | 100 m | none | yes | 2 mm/yr | tectonics |
 | `input-subsidence.yml` | 100 m | subsidence 0.3 mm/yr | yes | 2 mm/yr | tectonics, and the full-options run of the options test |
-| `input-sub_reefonly.yml` | 100 m | subsidence | no | no | options: the reef factory alone |
+| `input-sub_reefonly.yml` | 100 m | subsidence | no | no | options: the factories alone |
 | `input-sub_waves.yml` | 100 m | subsidence | yes | no | options: the wave control without erosion |
 | `input-erosion10.yml` | 100 m | uplift | yes | 10 mm/yr | coastal erosion strength |
 
@@ -38,9 +38,15 @@ uplifting coast each reef is lifted out of the sea within one highstand, so the
 wave control and the erosion change little there. Without waves the subsiding
 reef fills its whole accommodation and ends as one flat platform at sea level;
 with the wave control the sheltered interior grows slowly and an ~80 m deep
-lagoon opens behind a barrier reef. The coastal erosion at 2 mm/yr hardly
+lagoon, floored by platform sand and mud, opens behind a barrier reef. The coastal erosion at 2 mm/yr hardly
 changes the subsiding profile, while at 10 mm/yr it cuts the emerged terraces
-of the uplifting coast by tens of metres.
+of the uplifting coast, and its rubble (carbonate sand) builds the fore-reef
+out.
+
+The mesh is a lattice of equilateral triangles, symmetric about the centre
+line (`scripts/make_inputs.py`, `strip`). Do not split a square lattice along
+one diagonal: each node then has neighbours along that diagonal only, and the
+marine routing piles the loose sediment against one side wall.
 
 Every input file is commented: its header says what the run tests and how it
 differs from the reference.
@@ -65,17 +71,23 @@ differs from the reference.
   `scripts/make_inputs.py` from `data/spratt_lisiecki_2016_v2.tab`).
 - **`strata: dual`**: needed for the carbonate lithologies (`reef`,
   `carb_sand`, `carb_mud`), recorded in the stratigraphy.
-- **`carbonate`**: one reef-building factory. Growth follows the light law of
-  Bosscher & Schlager (1992), up to 6 mm/yr; a `depth` table stops it below
-  20 m; a `wave` table cuts it to 10 % where the waves do not reach (lagoons);
-  80 % of the production is built in place as reef framework, the rest is
-  loose carbonate sand and mud spread by the marine transport.
+- **`carbonate`**: two factories, both following the light law of Bosscher &
+  Schlager (1992). The `reef` factory grows up to 6 mm/yr; a `depth` table
+  stops it below 20 m; a `wave` table cuts it to 10 % where the waves do not
+  reach (lagoons); 80 % of its production is built in place as reef
+  framework, the rest is loose carbonate sand and mud. The `platform` factory
+  (algae, foraminifera, molluscs) grows 1 mm/yr down to 60 m, less dependent
+  on light and without wave control, and makes only loose sediment (half
+  sand, half mud): it fills the fore-reef slope and the lagoon floors. The
+  loose carbonate is spread by the marine transport.
 - **`waves`**: waves from the east, losing their energy as the water shallows
   below 10 m: the reef crest takes the energy, the lagoon behind it is
   sheltered.
 - **`coastal_erosion`**: abrasion of the shallow seafloor (decaying over 3 m
   of depth) and cliff retreat down to sea level, both scaled by the wave
   energy; the reef framework erodes ten times slower than loose sediment.
+  With `rubble: carb_sand` the eroded reef is moved and deposited as carbonate
+  sand (reef rubble), not as pieces of reef.
 
 ## Running it
 
@@ -94,8 +106,10 @@ comparisons between runs. The plotting functions are in `scripts/terraces.py`.
   `scripts/make_inputs.py` (Pastier et al. explore uplift rates from -2 to
   +2 mm/yr and foundation slopes of a few percent).
 - *Another reef*: change `growth`, the `depth` table (the depth range of your
-  reef builders), `framework` (more framework, more resistant reefs) or add a
-  second factory (for example a deeper `oligophotic` one with `framework: 0`).
+  reef builders) or `framework` (more framework, more resistant reefs).
+- *More or less loose carbonate*: lower the reef `framework`, or change the
+  `platform` factory (`growth`, its depth range, `sand` for the sand/mud
+  split). Remove `rubble` to keep eroded reef as reef.
 - *More or less wave action*: `shoal_depth` and `shoal_length` set where the
   waves lose their energy; `coastal_erosion: rate` how fast they cut cliffs.
 - *Climate*: add an `sst:` block and a `temperature` response to the factory
