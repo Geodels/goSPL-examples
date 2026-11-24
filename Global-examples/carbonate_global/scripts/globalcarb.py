@@ -210,3 +210,118 @@ def supply(name="geochem"):
         a.set_xlabel("time (Ma)")
         a.grid(alpha=0.25, lw=0.5)
     return fig
+
+
+# ---------------------------------------------------------------------------
+# Post-processing analyses
+# ---------------------------------------------------------------------------
+BELTS = (("tropics", 0.0, 23.5), ("subtropics", 23.5, 40.0),
+         ("temperate", 40.0, 60.0), ("polar", 60.0, 90.0))
+
+
+def _areas(sim):
+    """Area (m2) of every node, in the order of `load`: a third of each
+    incident triangle of the rank's mesh."""
+    a = []
+    for p in range(_nranks(sim)):
+        with h5py.File(os.path.join(sim, "h5", "topology.p%d.h5" % p), "r") as t:
+            v = t["coords"][:].astype(np.float64)
+            c = t["cells"][:].astype(np.int64) - 1
+        tri = 0.5 * np.linalg.norm(np.cross(v[c[:, 1]] - v[c[:, 0]],
+                                            v[c[:, 2]] - v[c[:, 0]]), axis=1)
+        ar = np.zeros(len(v))
+        for k in range(3):
+            np.add.at(ar, c[:, k], tri / 3.0)
+        a.append(ar)
+    return np.concatenate(a)
+
+
+def zonal(sims, labels, dlat=5.0):
+    """Benthic carbonate deposited (m, ocean mean) and pelagic deposition rate
+    (m/Myr) averaged in latitude bands, for several runs."""
+    bins = np.arange(-90.0, 90.0 + dlat, dlat)
+    mid = 0.5 * (bins[1:] + bins[:-1])
+    fig, ax = plt.subplots(1, 2, figsize=(14, 3.8), constrained_layout=True)
+    for sim, lab in zip(sims, labels):
+        lon, lat, dep = deposits(sim)
+        _, _, g = load(sim, steps(sim)[-1], ("elev", "pelDep"))
+        sea = g["elev"] < 0.0
+        a = _areas(sim)
+        k = np.digitize(lat, bins) - 1
+        cb = np.full(mid.size, np.nan)
+        pd = np.full(mid.size, np.nan)
+        for i in range(mid.size):
+            s = (k == i) & sea
+            if s.any():
+                cb[i] = np.sum(dep["carbonate"][s] * a[s]) / np.sum(a[s])
+                pd[i] = np.sum(g["pelDep"][s] * a[s]) / np.sum(a[s]) * 1e6
+        ax[0].plot(mid, cb, lw=1.5, label=lab)
+        ax[1].plot(mid, pd, lw=1.5, label=lab)
+    ax[0].set_ylabel("carbonate deposited (m, ocean mean)")
+    ax[1].set_ylabel("pelagic deposition (m/Myr, ocean mean)")
+    for a_ in ax:
+        a_.set_xlabel("latitude")
+        a_.set_xlim(-90, 90)
+        a_.grid(alpha=0.25, lw=0.5)
+        a_.legend(frameon=False, fontsize=8)
+    return fig
+
+
+def belts(sims, labels):
+    """Carbonate (benthic and pelagic, from the stratigraphy) and hemipelagic
+    clay volumes (km3) deposited in each climate belt over the run."""
+    import pandas as pd
+
+    rows = []
+    for sim, lab in zip(sims, labels):
+        lon, lat, dep = deposits(sim)
+        a = _areas(sim)
+        alat = np.abs(lat)
+        for name, lo, hi in BELTS:
+            s = (alat >= lo) & (alat < hi)
+            rows.append({"run": lab, "belt": name,
+                         "carbonate (km3)": np.sum(dep["carbonate"][s] * a[s]) / 1e9,
+                         "river + clay fine (km3)": np.sum(dep["fine"][s] * a[s]) / 1e9})
+    df = pd.DataFrame(rows)
+    return df.pivot(index="belt", columns="run", values="carbonate (km3)").loc[
+        [b[0] for b in BELTS], list(labels)].round(0)
+
+
+def carbonate_share(sim, title=None):
+    """Carbonate share of the deposits laid during the run."""
+    lon, lat, dep = deposits(sim)
+    _, _, g = load(sim, steps(sim)[-1], ("elev",))
+    share = np.where(dep["total"] > 0.5, dep["carbonate"] / np.maximum(dep["total"], 1e-9),
+                     np.nan)
+    return worldmap(lon, lat, share, title=title or "carbonate share of the deposits",
+                    cmap="viridis", label="-", land=g["elev"] >= 0.0, vmin=0, vmax=1)
+
+
+def export_grid(sim, out, spacing=0.5, mesh="../continental_flux/vars_25_80/mesh.npz"):
+    """Export the last output of a run to a regular longitude-latitude NetCDF
+    grid (fields, basins, chi) with gospl.analyse.gridexport."""
+    import xarray as xr
+    from gospl.analyse.gridexport import grid_export, to_netcdf
+
+    res = grid_export(os.path.join(sim, "h5"), mesh, spacing=spacing)
+    to_netcdf(res, out)
+    return xr.open_dataset(out)
+
+
+def section(sim, lat, lonlim, title=None, mesh="../continental_flux/vars_25_80/mesh.npz",
+            ylim=None):
+    """Stratigraphic section along the parallel `lat` between the longitudes
+    `lonlim`, coloured by lithology (river sand yellow, mud grey, carbonate
+    sand light blue, carbonate mud dark blue, reef pink)."""
+    from gospl.analyse.stratasection import cross_section, load_strata
+
+    data = load_strata(os.path.join(sim, "h5"), mesh)
+    _, ax = plt.subplots(figsize=(12, 4), constrained_layout=True)
+    # a path between the two ends: the distance (degrees) starts at the
+    # western end (with kind="x" it would start at longitude -180)
+    cross_section(data, path=[(lonlim[0], lat), (lonlim[1], lat)],
+                  color_by="lithologies", ax=ax, ylim=ylim, legend_loc="lower left")
+    ax.set_xlabel("degrees east of %g E along latitude %g" % (lonlim[0], lat))
+    ax.set_title(title or "%s, latitude %g, longitude %g to %g" % (sim, lat, *lonlim),
+                 fontsize=10)
+    return ax

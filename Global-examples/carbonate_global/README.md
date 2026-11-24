@@ -115,6 +115,14 @@ present-day estimates: a warm, shelf-rich Pangea without a supply limit and
 untuned factory rates. Calibrate the factory `growth` and the pelagic `prod`
 map against your target before using the numbers.
 
+**Caveat on the mesh.** The 250 Ma mesh of `continental_flux` holds 1,181
+closed depressions deeper than 6 km (3,025 nodes below 11 km, down to
+-25 km), artefacts of the paleo-bathymetry. The marine routing ends in them,
+and in 1 Myr some are filled by 1.5-2.7 km of sediment (carbonate included;
+~4 % of the carbonate still lies below 11 km). The volumes above include
+that infill: clean the bathymetry (fill or clip these holes) before using
+them for a real study.
+
 Open `view_Results.ipynb`: the forcing maps, the reference (carbonate
 production and thickness, pelagic deposition), the CCD comparison, the
 waves, the supply-limited run, and the carbonate budgets of every run. The
