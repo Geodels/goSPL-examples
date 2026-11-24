@@ -1,0 +1,112 @@
+# =============================================================================
+# carbonate_atoll: trade winds with coastal erosion
+#
+# Coastal erosion on the windward side; the eroded reef is moved as carbonate sand.
+#
+# All runs: a volcanic island (+150 m) sinking at 0.5 mm/yr for 600 kyr, so
+# that its fringing reef becomes a barrier reef and, once the summit drowns
+# (~300 kyr), an atoll (Darwin);
+# constant sea level; the same two carbonate factories. They differ only by
+# the waves. This run: waves trade winds from the east. Coastal erosion on.
+# =============================================================================
+name: carbonate atoll, trade winds with coastal erosion
+
+domain:
+    npdata: ['data/island','v','c','z']   # 14 x 14 km at 100 m, volcanic cone
+    bc: 'oooo'          # open ocean on every side
+    flowdir: 5          # multiple flow directions on the island
+
+time:
+    start: 0.
+    end: 6.e5           # 600 kyr: the summit drowns after ~300 kyr
+    tout: 2.e4          # an output every 20 kyr
+    dt: 1000.           # time step (the carbonate growth does not depend on it)
+    strat: 1.e4         # a stratigraphic layer every 10 kyr (60 layers)
+
+# The island is eroded by rivers: volcanic sand and mud reach the reef.
+spl:
+    K: 2.e-6
+    d: 0.
+    m: 0.5
+
+diffusion:
+    hillslopeKa: 0.05   # creep on the island (m2/yr)
+    hillslopeKm: 0.01   # marine diffusion of the loose sediment (m2/yr)
+    nonlinKm: 50.       # transport of fresh marine deposits (m2/yr)
+
+tectonics:
+  - start: 0.
+    end: 6.e5
+    upsub: ['data/island','sub']   # subsidence 0.5 mm/yr
+
+sea:
+    position: 0.        # constant sea level
+
+climate:
+  - start: 0.
+    uniform: 1.         # 1 m/yr of rain on the island
+
+strata:
+    dual: True          # volcanic sand and mud, plus the carbonate lithologies
+
+# -----------------------------------------------------------------------------
+# Carbonate production: two factories with the light law
+#   G(w) = growth * tanh(insolation * exp(-extinction * w) / saturation)
+# - reef: reef builders, 4 mm/yr, none below 25 m, 80 % built in place as
+#   framework;
+#   they need wave energy (2 % of their growth in sheltered water); they stop in the turbid water of the
+#   island's rivers (turbidity plume of the river mud, 1 km).
+# - lagoon: loose sand and mud producers (foraminifera, molluscs, algae),
+#   0.2 mm/yr down to 50 m, no framework, everywhere.
+# Behind a reef rim the sheltered water produces much less than the
+# subsidence (0.2 + 2 % of 4 = 0.28 mm/yr against 0.5), so a lagoon deepens
+# there once the summit has drowned.
+# -----------------------------------------------------------------------------
+carbonate:
+    insolation: 400.           # W/m2: light at the sea surface
+    factories:
+      - name: reef
+        growth: 4000.          # m/Myr (4 mm/yr)
+        extinction: 0.1        # 1/m: light falls with depth
+        saturation: 60.        # W/m2: light above which the growth no longer increases
+        framework: 0.8         # built in place (lithology `reef`)
+        sand: 0.8              # loose part: 80 % sand, 20 % mud
+        response:
+          - {control: depth, x: [0., 15., 25.], f: [1., 1., 0.]}
+          - {control: turbidity, length: 1.e3, x: [0., 1.e-3], f: [1., 0.]}   # no reef where 1 mm/yr of river mud passes
+          - {control: wave, x: [0., 0.5], f: [0.02, 1.]}   # reef builders need wave energy: sheltered water grows less
+      - name: lagoon
+        growth: 200.           # m/Myr (0.2 mm/yr): less than the subsidence
+        extinction: 0.05       # 1/m: less light-dependent
+        saturation: 60.
+        framework: 0.          # all loose sediment
+        sand: 0.5              # half carbonate sand, half carbonate mud
+        response:
+          - {control: depth, x: [0., 30., 50.], f: [1., 1., 0.]}
+
+# -----------------------------------------------------------------------------
+# Waves: trade winds from the east.
+# They lose their energy in water shallower than 10 m (over ~300 m): the reef
+# crest facing them takes the energy, the water behind it is sheltered, and
+# the island casts a shadow downwind.
+# -----------------------------------------------------------------------------
+waves:
+    climate:
+      - {from: 90., weight: 1.}   # trade winds from the east
+    decay: 1.e6                   # no attenuation in deep water
+    shoal_depth: 10.              # the waves feel the bottom shallower than 10 m
+    shoal_length: 300.            # and lose their energy over ~300 m (3 cells)
+
+# -----------------------------------------------------------------------------
+# Coastal wave erosion: the shallow seafloor and low cliffs are abraded by the
+# waves; the eroded reef is moved as carbonate sand (reef rubble).
+# -----------------------------------------------------------------------------
+coastal_erosion:
+    rate: 2.e-3          # m/yr at full wave energy, at sea level
+    depth_scale: 3.      # abrasion decays as exp(-depth / 3 m)
+    cliff_height: 10.    # land up to 10 m above sea level next to the sea is a cliff
+    max_erosion: 2.      # at most 2 m per step
+    rubble: carb_sand
+
+output:
+    dir: 'sim_erosion'
