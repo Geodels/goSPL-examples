@@ -19,6 +19,11 @@ Typical use::
     grid = md.open_global_grid("rain.nc", var="precip")
     rain = md.interpolate_to_mesh(grid, lon, lat)
     np.savez("rain_mesh.npz", r=rain)      # input file: map: ['rain_mesh', 'r']
+
+or, from a terminal::
+
+    python meshdata.py check my_data.nc precip
+    python meshdata.py interp mesh.npz my_data.nc precip rain_mesh.npz r
 """
 
 import numpy as np
@@ -156,3 +161,47 @@ def interpolate_to_mesh(da, lon, lat, method="linear"):
     f = RegularGridInterpolator((da.lat.values, da.lon.values), da.values.astype(float),
                                 method=method, bounds_error=True)
     return f(np.column_stack([np.clip(lat, -90.0, 90.0), np.clip(lon, -180.0, 180.0)]))
+
+
+def main(argv=None):
+    """Command line: check a NetCDF variable, or put it on a mesh.
+
+    python meshdata.py check my_data.nc [variable]
+    python meshdata.py interp mesh.npz my_data.nc variable out.npz key [--nearest]
+    """
+    import argparse
+    import sys
+
+    ap = argparse.ArgumentParser(prog="python meshdata.py",
+                                 description="Check global NetCDF data or put it on a goSPL mesh.")
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    c = sub.add_parser("check", help="check that a variable covers the sphere as goSPL needs")
+    c.add_argument("nc")
+    c.add_argument("var", nargs="?")
+    i = sub.add_parser("interp", help="interpolate a variable on the vertices of a mesh")
+    i.add_argument("mesh")
+    i.add_argument("nc")
+    i.add_argument("var")
+    i.add_argument("out")
+    i.add_argument("key")
+    i.add_argument("--nearest", action="store_true", help="nearest value (classes) instead of bilinear")
+    a = ap.parse_args(argv)
+    try:
+        grid = open_global_grid(a.nc, var=a.var)
+    except GridError as err:
+        print("NOT USABLE: %s\n\n%s" % (a.nc, err))
+        sys.exit(1)
+    print("OK: %s %s, %d x %d, longitude %g to %g, latitude %g to %g, values %g to %g"
+          % (a.nc, a.var or "", grid.lat.size, grid.lon.size, grid.lon[0], grid.lon[-1],
+             grid.lat[0], grid.lat[-1], float(grid.min()), float(grid.max())))
+    if a.cmd == "interp":
+        lon, lat = mesh_lonlat(a.mesh)
+        vals = interpolate_to_mesh(grid, lon, lat, method="nearest" if a.nearest else "linear")
+        np.savez(a.out, **{a.key: vals})
+        print("wrote %s, key %r: %d values from %g to %g (input file: ['%s', '%s'])"
+              % (a.out, a.key, len(vals), vals.min(), vals.max(),
+                 a.out[:-4] if a.out.endswith(".npz") else a.out, a.key))
+
+
+if __name__ == "__main__":
+    main()
