@@ -11,8 +11,8 @@ geochem_inputs.npz`): build those two examples' inputs first.
     sst    sea-surface temperature (degC): 29 at the equator, falling to ~0
            at the poles (cosine of the latitude), used by the temperature
            response of the carbonate factories and of the pelagic rain,
-    prod   pelagic carbonate rain (m/Myr): 2 everywhere plus 8 in the
-           equatorial belt (high export production), before dissolution.
+    prod   pelagic carbonate rain (m/Myr): 1 everywhere plus 12 in the
+           tropical belt (high export production), before dissolution.
 
 Every run uses one commented template; each experiment switches blocks on or
 off. Run from the example folder: python scripts/make_inputs.py
@@ -33,7 +33,7 @@ def maps():
     R = np.linalg.norm(v, axis=1)
     lat = np.degrees(np.arcsin(np.clip(v[:, 2] / R, -1.0, 1.0)))
     sst = 29.0 * np.cos(np.radians(lat)) ** 1.5
-    prod = 2.0 + 8.0 * np.exp(-(lat / 15.0) ** 2)
+    prod = 1.0 + 12.0 * np.exp(-(lat / 20.0) ** 2)
     np.savez(os.path.join(HERE, "data", "carb_maps"), sst=sst, prod=prod)
     return len(v)
 
@@ -63,7 +63,7 @@ time:
     strat: 1.e5         # a stratigraphic layer every output
 
 spl:
-    K: 5.e-6
+    K: 1.e-6            # a fifth of continental_flux's: this example is about the carbonate
     d: 0.42
     m: 0.5
 
@@ -98,39 +98,54 @@ sst:
       - {{start: 250.e6, map: ['data/carb_maps', 'sst']}}
 
 # -----------------------------------------------------------------------------
-# Carbonate production: two factories with the light law
+# Carbonate production: three tropical factories with the light law
 #   G(w) = growth * tanh(insolation * exp(-extinction * w) / saturation)
-# at a 20-100 km resolution a reef is narrower than a cell: `reef` is the
-# framework share of a cell's carbonate (a margin facies).
-# - shallow: tropical shelves (reefs, green algae, ooids), 0.4 mm/yr, 30 %
-#   framework, only in warm water (no growth below 16 or above 32 degC, full
-#   growth between 18 and 28 degC).
-# - deep: cool-water and deeper loose carbonate (bryozoans, foraminifera,
-#   molluscs), 0.05 mm/yr down to 400 m, at every temperature.{wave_text}{solute_text}
+# each limited to warm water by a `temperature` table (the sea-surface
+# temperature map): the carbonate of this example is tropical. At a 20-100 km
+# resolution a reef is narrower than a cell: `reef` is the framework share of
+# a cell's carbonate (a margin facies).
+# - reef: reef builders (corals, red algae), 1 mm/yr in the top ~20 m, half
+#   built in place as framework, none below 30 m, full growth from 20 to
+#   28 degC, none below 18 or above 31.
+# - platform: loose sand and mud producers of the tropical shelves (green
+#   algae, ooids, molluscs), 0.6 mm/yr down to ~60 m, from 18 to 29 degC.
+# - oligophotic: deeper tropical producers (larger foraminifera, red algae
+#   rhodoliths), 0.15 mm/yr down to 150 m, from 17 to 30 degC.{wave_text}{solute_text}
 # -----------------------------------------------------------------------------
 carbonate:
     insolation: 400.           # W/m2: light at the sea surface
     factories:
-      - name: shallow
-        growth: 400.           # m/Myr (0.4 mm/yr)
+      - name: reef
+        growth: 1000.          # m/Myr (1 mm/yr)
         extinction: 0.1        # 1/m: light falls with depth
         saturation: 60.        # W/m2: light above which the growth no longer increases
-        framework: 0.3         # 30 % built in place (lithology `reef`)
-        sand: 0.6              # loose part: 60 % sand, 40 % mud
+        framework: 0.5         # half built in place (lithology `reef`)
+        sand: 0.7              # loose part: 70 % sand, 30 % mud
         response:
-          - {{control: temperature, x: [16., 18., 28., 32.], f: [0., 1., 1., 0.]}}
-{wave_resp}{solute_resp}      - name: deep
-        growth: 50.            # m/Myr (0.05 mm/yr)
-        extinction: 0.005      # 1/m: hardly light-dependent
+          - {{control: temperature, x: [18., 20., 28., 31.], f: [0., 1., 1., 0.]}}
+          - {{control: depth, x: [0., 20., 30.], f: [1., 1., 0.]}}
+{wave_resp}{solute_resp}      - name: platform
+        growth: 600.           # m/Myr (0.6 mm/yr)
+        extinction: 0.05
         saturation: 60.
         framework: 0.          # all loose sediment
-        sand: 0.3
+        sand: 0.5              # half carbonate sand, half carbonate mud
         response:
-          - {{control: depth, x: [0., 200., 400.], f: [1., 1., 0.]}}
+          - {{control: temperature, x: [16., 18., 29., 32.], f: [0., 1., 1., 0.]}}
+          - {{control: depth, x: [0., 40., 60.], f: [1., 1., 0.]}}
+      - name: oligophotic
+        growth: 150.           # m/Myr (0.15 mm/yr)
+        extinction: 0.01       # 1/m: little light needed
+        saturation: 60.
+        framework: 0.
+        sand: 0.6
+        response:
+          - {{control: temperature, x: [15., 17., 30., 33.], f: [0., 1., 1., 0.]}}
+          - {{control: depth, x: [0., 100., 150.], f: [1., 1., 0.]}}
 
 # -----------------------------------------------------------------------------
 # Pelagic rain: carbonate from the surface ocean (data/carb_maps.npz `prod`,
-# m/Myr, high under the equatorial belt), preserved above the lysocline,
+# m/Myr, high under the tropical belt), preserved above the lysocline,
 # dissolving linearly down to the carbonate compensation depth (CCD) where
 # none is preserved; and hemipelagic clay (fine) decaying away from the coasts.
 # -----------------------------------------------------------------------------
@@ -149,7 +164,7 @@ output:
 
 WAVE_RESP = ("          - {control: wave, x: [0., 0.5], f: [0.3, 1.]}   "
              "# reef builders prefer exposed coasts\n")
-WAVE_TEXT = ("\n# The shallow factory grows less on sheltered coasts (wave energy below 0.5).")
+WAVE_TEXT = ("\n# The reef builders grow less on sheltered coasts (wave energy below 0.5).")
 WAVES = """
 # -----------------------------------------------------------------------------
 # Waves: the global wind belts (trade winds from the east within 30 degrees of
@@ -181,7 +196,7 @@ coastal_erosion:
 SOIL = """
 soil:
     mode: 'regolith'
-    soilK: 8.e-6
+    soilK: 1.6e-6
     solver: 'ngmres'
     pcType: 'hypre'
     rtol: 1.e-5
@@ -230,7 +245,7 @@ groundwater:
 """
 SOLUTE_RESP = ("          - {{control: solute, species: carbonate, length: 2.e5, x: [0., {sx}], "
                "f: [0.5, 1.]}}   # more growth where the rivers bring carbonate (alkalinity)\n")
-SOLUTE_TEXT = ("\n# The shallow factory grows more where the rivers bring dissolved carbonate\n"
+SOLUTE_TEXT = ("\n# The reef builders grow more where the rivers bring dissolved carbonate\n"
                "# (alkalinity), half its rate far from them (plume of 200 km).")
 SUPPLY = """
 # -----------------------------------------------------------------------------
@@ -247,25 +262,25 @@ carbonate_supply:
 RUNS = {
     # name: (lys, ccd, waves, geochem, title, purpose, diff)
     "carb": (3500., 4500., False, False, "reference",
-             "Global carbonate system: tropical shelves, cool-water carbonate, "
-             "pelagic carbonate above the CCD and hemipelagic clay.",
+             "Global carbonate system: tropical reefs and shelves, pelagic "
+             "carbonate above the CCD and hemipelagic clay.",
              "nothing (this is the reference)."),
     "ccd_shallow": (2500., 3500., False, False, "shallow CCD",
                     "A shallower lysocline and CCD (2500 and 3500 m instead of "
                     "3500 and 4500): less pelagic carbonate preserved in the basins.",
                     "lysocline 2500 m, CCD 3500 m."),
     "waves": (3500., 4500., True, False, "waves and coastal erosion",
-              "The global wind belts make exposed and sheltered coasts: the shallow "
-              "factory prefers exposed ones, and the waves erode the coasts.",
+              "The global wind belts make exposed and sheltered coasts: the "
+              "reef builders prefer exposed ones, and the waves erode the coasts.",
               "a `waves` block (zonal belts, fetch 500 km), a `wave` response on "
-              "the shallow factory and a `coastal_erosion` block."),
+              "the reef builders and a `coastal_erosion` block."),
     "geochem": (3500., 4500., False, True, "coupled to the geochemistry",
                 "The carbonate is coupled to the continental geochemistry of "
                 "continental_geochem: the dissolved carbonate delivered by the "
                 "rivers limits the burial, and its coastal plume favours the "
-                "shallow factory.",
+                "reef builders.",
                 "the soil, provenance, groundwater and geochemistry blocks of "
-                "continental_geochem, a `solute` response on the shallow factory "
+                "continental_geochem, a `solute` response on the reef builders "
                 "and a `carbonate_supply` block."),
 }
 

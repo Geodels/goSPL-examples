@@ -22,7 +22,7 @@ time:
     strat: 1.e5         # a stratigraphic layer every output
 
 spl:
-    K: 5.e-6
+    K: 1.e-6            # a fifth of continental_flux's: this example is about the carbonate
     d: 0.42
     m: 0.5
 
@@ -57,39 +57,54 @@ sst:
       - {start: 250.e6, map: ['data/carb_maps', 'sst']}
 
 # -----------------------------------------------------------------------------
-# Carbonate production: two factories with the light law
+# Carbonate production: three tropical factories with the light law
 #   G(w) = growth * tanh(insolation * exp(-extinction * w) / saturation)
-# at a 20-100 km resolution a reef is narrower than a cell: `reef` is the
-# framework share of a cell's carbonate (a margin facies).
-# - shallow: tropical shelves (reefs, green algae, ooids), 0.4 mm/yr, 30 %
-#   framework, only in warm water (no growth below 16 or above 32 degC, full
-#   growth between 18 and 28 degC).
-# - deep: cool-water and deeper loose carbonate (bryozoans, foraminifera,
-#   molluscs), 0.05 mm/yr down to 400 m, at every temperature.
+# each limited to warm water by a `temperature` table (the sea-surface
+# temperature map): the carbonate of this example is tropical. At a 20-100 km
+# resolution a reef is narrower than a cell: `reef` is the framework share of
+# a cell's carbonate (a margin facies).
+# - reef: reef builders (corals, red algae), 1 mm/yr in the top ~20 m, half
+#   built in place as framework, none below 30 m, full growth from 20 to
+#   28 degC, none below 18 or above 31.
+# - platform: loose sand and mud producers of the tropical shelves (green
+#   algae, ooids, molluscs), 0.6 mm/yr down to ~60 m, from 18 to 29 degC.
+# - oligophotic: deeper tropical producers (larger foraminifera, red algae
+#   rhodoliths), 0.15 mm/yr down to 150 m, from 17 to 30 degC.
 # -----------------------------------------------------------------------------
 carbonate:
     insolation: 400.           # W/m2: light at the sea surface
     factories:
-      - name: shallow
-        growth: 400.           # m/Myr (0.4 mm/yr)
+      - name: reef
+        growth: 1000.          # m/Myr (1 mm/yr)
         extinction: 0.1        # 1/m: light falls with depth
         saturation: 60.        # W/m2: light above which the growth no longer increases
-        framework: 0.3         # 30 % built in place (lithology `reef`)
-        sand: 0.6              # loose part: 60 % sand, 40 % mud
+        framework: 0.5         # half built in place (lithology `reef`)
+        sand: 0.7              # loose part: 70 % sand, 30 % mud
         response:
-          - {control: temperature, x: [16., 18., 28., 32.], f: [0., 1., 1., 0.]}
-      - name: deep
-        growth: 50.            # m/Myr (0.05 mm/yr)
-        extinction: 0.005      # 1/m: hardly light-dependent
+          - {control: temperature, x: [18., 20., 28., 31.], f: [0., 1., 1., 0.]}
+          - {control: depth, x: [0., 20., 30.], f: [1., 1., 0.]}
+      - name: platform
+        growth: 600.           # m/Myr (0.6 mm/yr)
+        extinction: 0.05
         saturation: 60.
         framework: 0.          # all loose sediment
-        sand: 0.3
+        sand: 0.5              # half carbonate sand, half carbonate mud
         response:
-          - {control: depth, x: [0., 200., 400.], f: [1., 1., 0.]}
+          - {control: temperature, x: [16., 18., 29., 32.], f: [0., 1., 1., 0.]}
+          - {control: depth, x: [0., 40., 60.], f: [1., 1., 0.]}
+      - name: oligophotic
+        growth: 150.           # m/Myr (0.15 mm/yr)
+        extinction: 0.01       # 1/m: little light needed
+        saturation: 60.
+        framework: 0.
+        sand: 0.6
+        response:
+          - {control: temperature, x: [15., 17., 30., 33.], f: [0., 1., 1., 0.]}
+          - {control: depth, x: [0., 100., 150.], f: [1., 1., 0.]}
 
 # -----------------------------------------------------------------------------
 # Pelagic rain: carbonate from the surface ocean (data/carb_maps.npz `prod`,
-# m/Myr, high under the equatorial belt), preserved above the lysocline,
+# m/Myr, high under the tropical belt), preserved above the lysocline,
 # dissolving linearly down to the carbonate compensation depth (CCD) where
 # none is preserved; and hemipelagic clay (fine) decaying away from the coasts.
 # -----------------------------------------------------------------------------
