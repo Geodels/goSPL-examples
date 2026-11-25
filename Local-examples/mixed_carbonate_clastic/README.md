@@ -4,7 +4,7 @@ A passive margin where rivers and carbonate factories share the shelf. It
 starts from the `stratigraphic_record` example (same mesh, topography and
 sea-level curve) and adds goSPL's carbonate module (`carbonate:`), and in some
 runs the wave energy (`waves:`), coastal erosion (`coastal_erosion:`) and
-gravity currents (`gravity:`). It needs the `feat/carbonates` branch of goSPL.
+gravity currents (`gravity:`). It needs the `feat/gravity-carbonates-karst` branch of goSPL.
 
 ## What it shows
 

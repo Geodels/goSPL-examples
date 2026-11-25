@@ -6,7 +6,7 @@ the sea-surface temperature, pelagic carbonate preserved above the carbonate
 compensation depth (CCD), hemipelagic clay, wave energy and coastal erosion
 from the global wind belts, and the coupling with the continental
 geochemistry of `continental_geochem` (the dissolved carbonate delivered by
-the rivers limits the burial). It needs the `feat/carbonates` branch of goSPL.
+the rivers limits the burial). It needs the `feat/gravity-carbonates-karst` branch of goSPL.
 
 ## Before running
 

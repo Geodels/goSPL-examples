@@ -4,7 +4,7 @@ Coral reef terraces built by Quaternary sea-level changes on a margin that
 rises, stays put or sinks, after the numerical experiments of Pastier et al.
 (2019). The example uses goSPL's carbonate module (`carbonate:`), wave energy
 (`waves:`) and coastal wave erosion (`coastal_erosion:`), on the
-`feat/carbonates` branch of goSPL.
+`feat/gravity-carbonates-karst` branch of goSPL.
 
 ## What it shows
 

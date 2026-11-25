@@ -82,7 +82,7 @@ TEMPLATE = """\
 # All runs: a volcanic island (+150 m) sinking at 0.5 mm/yr for 600 kyr, so
 # that its fringing reef becomes a barrier reef and, once the summit drowns
 # (~300 kyr), an atoll (Darwin);
-# constant sea level; the same two carbonate factories. They differ only by
+# constant sea level unless stated; the same two carbonate factories. They differ only by
 # the waves. This run: {diff}
 # =============================================================================
 name: carbonate atoll, {title}
@@ -159,7 +159,7 @@ carbonate:
         sand: 0.5              # half carbonate sand, half carbonate mud
         response:
           - {{control: depth, x: [0., 30., 50.], f: [1., 1., 0.]}}
-{waves}{coast}
+{waves}{coast}{karst}
 output:
     dir: 'sim_{name}'
 """
@@ -203,6 +203,19 @@ EAST = "      - {from: 90., weight: 1.}   # trade winds from the east\n"
 SEASON = ("      - {from: 90., weight: 0.7}   # trade winds from the east, 70 % of the energy\n"
           "      - {from: 200., weight: 0.3}  # winter swell from the south-south-west, 30 %\n")
 
+KARST = """
+# -----------------------------------------------------------------------------
+# Karst: the runoff dissolves the carbonate exposed during
+# the lowstands, 5e-5 m of rock per m of water (50 m/Myr under 1 m/yr of
+# rain), more where the water concentrates (focus); the volcanic rock does
+# not dissolve, and 0.5 m of insoluble residue protects what lies below.
+# -----------------------------------------------------------------------------
+karst:
+    rate: 5.e-5          # m of rock dissolved per m of runoff
+    focus: 0.3           # dissolution grows as (contributing area / cell)^0.3
+    cover: 0.5           # m of insoluble residue that stops it
+"""
+
 SEA_CONST = """sea:
     position: 0.        # constant sea level
 """
@@ -238,6 +251,11 @@ RUNS = {
                  "The trade-wind run under the Quaternary sea level (Spratt & "
                  "Lisiecki 2016): lowstands of -120 m expose the platform and move "
                  "the reef down the flanks; each highstand floods it again."),
+    "karst": (EAST, "trade winds from the east.", False, False,
+              "glacial sea level and karst",
+              "The glacial sea-level run with karst dissolution: during the "
+              "lowstands the exposed platform is dissolved by the runoff, "
+              "most along its drainage."),
 }
 
 
@@ -251,8 +269,10 @@ def write_inputs():
                 diff += " Refraction on."
             if ero:
                 diff += " Coastal erosion on."
-            if name == "sealevel":
+            if name in ("sealevel", "karst"):
                 diff += " Sea level from the Spratt & Lisiecki stack."
+            if name == "karst":
+                diff += " Karst dissolution of the exposed carbonate."
         txt = TEMPLATE.format(
             title=title, purpose=purpose, diff=diff, name=name,
             wave_text=WAVE_TEXT if clim else NOWAVE_TEXT,
@@ -260,7 +280,8 @@ def write_inputs():
             waves=WAVES.format(wave_title=wtitle, climate=clim,
                                refraction=REFR if refr else "") if clim else "",
             coast=COAST if ero else "",
-            sea=SEA_CURVE if name == "sealevel" else SEA_CONST)
+            karst=KARST if name == "karst" else "",
+            sea=SEA_CURVE if name in ("sealevel", "karst") else SEA_CONST)
         open(os.path.join(HERE, "input-%s.yml" % name), "w").write(txt)
         print("input-%s.yml" % name)
 

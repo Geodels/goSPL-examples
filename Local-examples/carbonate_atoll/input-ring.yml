@@ -6,7 +6,7 @@
 # All runs: a volcanic island (+150 m) sinking at 0.5 mm/yr for 600 kyr, so
 # that its fringing reef becomes a barrier reef and, once the summit drowns
 # (~300 kyr), an atoll (Darwin);
-# constant sea level; the same two carbonate factories. They differ only by
+# constant sea level unless stated; the same two carbonate factories. They differ only by
 # the waves. This run: waves from eight directions with the same energy (no prevailing direction).
 # =============================================================================
 name: carbonate atoll, waves from all directions

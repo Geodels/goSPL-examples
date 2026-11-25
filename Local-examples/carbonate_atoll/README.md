@@ -5,7 +5,7 @@ from a fringing reef to a barrier reef and an atoll. The reef builders need
 wave energy, so the wave climate decides where the reef rim grows. The example
 uses goSPL's carbonate module (`carbonate:`), wave energy (`waves:`), the
 open-water index (`exposure`) and coastal erosion (`coastal_erosion:`), on
-the `feat/carbonates` branch of goSPL.
+the `feat/gravity-carbonates-karst` branch of goSPL.
 
 ## What it shows
 

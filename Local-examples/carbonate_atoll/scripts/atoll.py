@@ -143,3 +143,40 @@ def section(sim, kind="x", ax=None, title=None, color_by="lithologies"):
     ax.set_title(title or "%s, %s section" % (sim, "west-east" if kind == "x"
                                               else "south-north"), fontsize=10)
     return ax
+
+
+def karst(sim="sim_karst", ref="sim_sealevel"):
+    """Karst run (goSPL feat/gravity-carbonates-karst): cumulative dissolution, the final
+    elevation with and without the karst, and the dissolution through time
+    (from the --summary record, km3 per step)."""
+    import json
+
+    last = steps(sim)[-1]
+    xy, g = load(sim, last, ("elev", "karstDiss"))
+    xr, gr = load(ref, steps(ref)[-1], ("elev",))
+    fig = plt.figure(figsize=(15, 4.3), constrained_layout=True)
+    a1, a2, a3, a4 = (fig.add_subplot(1, 4, i + 1) for i in range(4))
+    _map(a1, xy, g["karstDiss"], "cumulative dissolution", "YlOrBr", "m", vmin=0)
+    _coast(a1, xy, g["elev"], 0.0, colors="k", linewidths=0.8)
+    _map(a2, xr, gr["elev"], "no karst", "terrain", cbar=False, vmin=-150, vmax=150)
+    im = _map(a3, xy, g["elev"], "with karst", "terrain", cbar=False, vmin=-150, vmax=150)
+    for a, x, z in ((a2, xr, gr["elev"]), (a3, xy, g["elev"])):
+        _coast(a, x, z, -10.0, colors="c", linewidths=1.8)
+    fig.colorbar(im, ax=[a2, a3], label="elevation (m)", shrink=0.8)
+    for a in (a1, a2, a3):
+        a.set_xlabel("x (km)")
+    t, v = [], []
+    for line in open("summary_%s.jsonl" % sim.replace("sim_", "")):
+        r = json.loads(line)
+        if "karst" in r:
+            t.append(r["t"] * 1e-3)
+            v.append(r["karst"]["dissolved"] * 1e-9)
+    a4.plot(t, np.cumsum(v), color="tab:brown")
+    a4.set_xlabel("model time (kyr)")
+    a4.set_ylabel("cumulative dissolution (km$^3$)")
+    a4.set_title("dissolved carbonate", fontsize=10)
+    sl = np.loadtxt("data/sealevel.csv", delimiter=",")
+    b = a4.twinx()
+    b.plot(sl[:, 0] * 1e-3, sl[:, 1], color="0.6", lw=0.8)
+    b.set_ylabel("sea level (m)", color="0.4")
+    return fig

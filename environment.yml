@@ -56,6 +56,6 @@ dependencies:
   - pip
   - pip:
       - perlin-noise
-      # goSPL from its feat/gravity-currents branch (the gravity module is not on
+      # goSPL from its feat/gravity-carbonates-karst branch (gravity currents, carbonates and karst are not on
       # goSPL dev yet); switch back to @dev when it is merged there
-      - gospl @ git+https://github.com/Geodels/gospl.git@feat/gravity-currents
+      - gospl @ git+https://github.com/Geodels/gospl.git@feat/gravity-carbonates-karst
