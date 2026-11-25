@@ -77,4 +77,4 @@ The crust localisation is set by `duricrust: discharge_gate: True` and the finit
 `geochem: species: source_pool`; everything else (mesh, `bc: 'owow'`, two-phase
 `climate` / `tectonics`) matches the `ferricrete_inversion` example. Full formulation:
 the goSPL
-[groundwater technical guide](https://gospl.readthedocs.io/en/latest/tech_guide/groundwater.html).
+[groundwater technical guide](https://gospl.readthedocs.io/en/v2026.7.14/tech_guide/groundwater.html).

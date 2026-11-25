@@ -97,4 +97,4 @@ valleys). Open `sim_ferricrete/*.xdmf` in ParaView and colour by `duricrust`, `K
 The scenario is set by the two-phase `tectonics` block (`t1` quiet, `t2` base-level
 fall), the two-phase `climate` block (wet → drier), the `bc: 'owow'` boundary, and the
 `groundwater:` section of [`input.yml`](input.yml). Full formulation: the goSPL
-[groundwater technical guide](https://gospl.readthedocs.io/en/latest/tech_guide/groundwater.html).
+[groundwater technical guide](https://gospl.readthedocs.io/en/v2026.7.14/tech_guide/groundwater.html).

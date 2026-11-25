@@ -57,6 +57,6 @@ for the plotting pattern.
 
 The whole capability is the `groundwater:` section of [`input.yml`](input.yml) —
 each key is commented with its meaning and a sensible value. See the goSPL
-[groundwater technical guide](https://gospl.readthedocs.io/en/latest/tech_guide/groundwater.html)
-and the [input reference](https://gospl.readthedocs.io/en/latest/user_guide/surfproc.html#groundwater-duricrust)
+[groundwater technical guide](https://gospl.readthedocs.io/en/v2026.7.14/tech_guide/groundwater.html)
+and the [input reference](https://gospl.readthedocs.io/en/v2026.7.14/user_guide/surfproc.html#groundwater-duricrust)
 for the full formulation and parameter tables.
