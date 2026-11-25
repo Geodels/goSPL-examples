@@ -22,7 +22,7 @@ diffusion:
     hillslopeKm: 2.0                          # marine linear hillslope diffusivity (m^2/yr)
     nonlinKm: 100.                            # non-linear diffusivity for fresh river-deposited marine sediment (m^2/yr)
     clinSlp: 1.e-5                            # max clinoform slope; caps marine deposit top vs distance-to-shore
-    marineSolver: picard   # default is 'ts' (the adaptive non-linear time-stepper)
+    marineSolver: picard   # the default since November 2026 ('ts': the adaptive time-stepper)
     picardSub: 10          # backward-Euler sub-steps over each goSPL dt (accuracy↕)
     picardIts: 2           # Picard (lagged-Cd) iterations per sub-step
 
