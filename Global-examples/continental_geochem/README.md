@@ -90,4 +90,4 @@ for the flux-map plotting pattern (the solute CSVs have the same layout as the
 
 See the `groundwater: geochem:` section of [`input.yml`](input.yml). Full
 formulation: the goSPL
-[groundwater technical guide](https://gospl.readthedocs.io/en/latest/tech_guide/groundwater.html).
+[groundwater technical guide](https://gospl.readthedocs.io/en/dev/tech_guide/groundwater.html).
