@@ -1,0 +1,4 @@
+# files written by build_inputs.ipynb
+*.nc
+*.npz
+__pycache__/
