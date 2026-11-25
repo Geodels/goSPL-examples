@@ -93,35 +93,40 @@ Over 1 Myr (thousand km3; the framework is part of the benthic carbonate):
 
 | Run | Benthic carbonate (framework) | Pelagic carbonate preserved | dissolved | Hemipelagic clay |
 |---|---|---|---|---|
-| reference | 1,930 (281) | 1,009 | 301 | 54 |
-| shallow CCD | 1,929 (281) | 694 | 616 | 54 |
-| waves and coastal erosion | 2,057 (284) | 1,054 | 301 | 55 |
-| coupled to the geochemistry | 1,491 (213) | 711 | 206 | 51 |
+| reference | 1,936 (282) | 1,013 | 298 | 54 |
+| shallow CCD | 1,936 (282) | 697 | 614 | 54 |
+| waves and coastal erosion | 2,064 (286) | 1,058 | 297 | 55 |
+| coupled to the geochemistry | 1,539 (219) | 748 | 214 | 51 |
 
 - **CCD**: raising the lysocline and the CCD by 1000 m removes 31 % of the
   pelagic carbonate kept in the basins (the dissolved part doubles); the
   shelves are not affected.
 - **Waves**: open water carries the full wave energy, the coasts in the lee
   of Pangea and the Tethys gulfs are sheltered. Coastal erosion (217,000 km3
-  over the run, up to ~20 m on exposed coasts) reopens shallow space that the
+  over the run, up to ~20 m on exposed coasts, 40 m at most) reopens shallow space that the
   factories fill again, so the benthic carbonate ends 7 % higher.
 - **Geochemistry**: the dissolved carbonate delivered by the rivers limits
-  the burial from the first steps (scaled by 0.55-0.95, 0.69 on average)
-  and the marine reservoir is drawn down (6.6e12 to ~4.5e12 units): benthic
-  carbonate -23 %, pelagic -30 %.
+  the burial from the first steps (scaled by 0.53-0.94, 0.72 on average)
+  and the marine reservoir is drawn down (6.6e12 to ~5.4e12 units): benthic
+  carbonate -21 %, pelagic -26 %.
 
 About 3 km3/yr of carbonate burial in the reference is a few times the
 present-day estimates: a warm, shelf-rich Pangea without a supply limit and
 untuned factory rates. Calibrate the factory `growth` and the pelagic `prod`
 map against your target before using the numbers.
 
-**Caveat on the mesh.** The 250 Ma mesh of `continental_flux` holds 1,181
-closed depressions deeper than 6 km (3,025 nodes below 11 km, down to
--25 km), artefacts of the paleo-bathymetry. The marine routing ends in them,
-and in 1 Myr some are filled by 1.5-2.7 km of sediment (carbonate included;
-~4 % of the carbonate still lies below 11 km). The volumes above include
-that infill: clean the bathymetry (fill or clip these holes) before using
-them for a real study.
+**Caveats.** The 250 Ma paleo-bathymetry of `continental_flux` went down to
+-25 km (closed holes and spikes, artefacts of the reconstruction): its mesh
+is now cleaned before it is saved (`../continental_flux/scripts/clean_bathymetry.py`:
+spikes set to their neighbourhood median, seafloor clipped at -6500 m), so the
+marine routing no longer ends in kilometre-deep holes. The continental erosion
+inherited from `continental_flux` is strong, though: ~42 km3/yr of rock
+eroded (about five times the present-day global sediment flux), and at 20-100
+km spacing the river sediment piles up at the mouths, more than 500 m thick
+in ~28,000 cells and over a kilometre at the largest deltas. The carbonate
+volumes above are little affected (the factories grow away from the deltas,
+the pelagic rain in the open ocean), but lower the erodibility (`spl: K`) of
+the continental template before using the clastic volumes.
 
 Open `view_Results.ipynb`: the forcing maps, the reference (carbonate
 production and thickness, pelagic deposition), the CCD comparison, the

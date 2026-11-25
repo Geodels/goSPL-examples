@@ -4,8 +4,8 @@ A volcanic island sinks while reef builders grow around it: Darwin's sequence
 from a fringing reef to a barrier reef and an atoll. The reef builders need
 wave energy, so the wave climate decides where the reef rim grows. The example
 uses goSPL's carbonate module (`carbonate:`), wave energy (`waves:`), the
-open-water index (`exposure`) and coastal erosion (`coastal_erosion:`), on
-the `feat/gravity-carbonates-karst` branch of goSPL.
+open-water index (`exposure`), coastal erosion (`coastal_erosion:`) and karst
+dissolution (`karst:`), on the `feat/gravity-carbonates-karst` branch of goSPL.
 
 ## What it shows
 
@@ -24,6 +24,8 @@ the `feat/gravity-carbonates-karst` branch of goSPL.
 - **Drowning under glacial sea level**: the Quaternary sea level (Spratt &
   Lisiecki 2016) moves the reef down the flanks at the lowstands, and the last
   deglacial rise drowns it: a drowned atoll.
+- **Karst**: during those lowstands the exposed platform is dissolved by the
+  runoff, most along its drainage lines.
 
 ## The experiments
 
@@ -34,8 +36,9 @@ the `feat/gravity-carbonates-karst` branch of goSPL.
 | `input-east.yml` | east (trade winds) | no | no | constant | windward crescent reef, sand platform, leeward margin drowned (to -106 m) |
 | `input-season.yml` | east 70 %, SSW 30 % | no | no | constant | rims facing both swells, interior kept up, north-west margin lagging |
 | `input-refraction.yml` | east | yes | no | constant | as `east` |
-| `input-erosion.yml` | east | no | yes (rubble) | constant | as `east`, the drowned lee half filled with sand (to -58 m) |
+| `input-erosion.yml` | east | no | yes (rubble) | constant | as `east`, the drowned lee half filled with sand (to -63 m) |
 | `input-sealevel.yml` | east | no | no | Spratt & Lisiecki | drowned atoll (highest point -67 m) |
+| `input-karst.yml` | east | no | no | Spratt & Lisiecki, karst | as `sealevel`, the platform dissolved by up to 30 m during the lowstands (highest point -72 m) |
 
 Every input file is generated from one commented template by
 `scripts/make_inputs.py`; its header says what the run tests and how it
@@ -82,16 +85,39 @@ differs from the others.
   sea level, decaying over 3 m of depth; eroded reef moved as carbonate sand
   (`rubble: carb_sand`).
 
+## Karst (`input-karst.yml`)
+
+The glacial sea-level run with a `karst` block:
+
+```yaml
+karst:
+    rate: 5.e-5          # m of rock dissolved per m of runoff (50 m/Myr under 1 m/yr)
+    focus: 0.3           # dissolution grows as (contributing area / cell)^0.3
+    cover: 0.5           # m of insoluble residue that stops it
+```
+
+Only the carbonate lithologies dissolve (`reef`, `carb_sand`, `carb_mud` by
+default); the volcanic rock does not, and 0.5 m of insoluble residue protects
+what lies below it. The platform is exposed during the lowstands, so the
+dissolution happens in steps (the cumulative curve of the `karst()` figure
+climbs with each lowstand and stays flat during the highstands): 0.29 km3 in
+600 kyr, on average 9 m where the platform was exposed, up to 30 m along the
+drainage lines that `focus` picks out on the flanks. The drowned atoll ends
+5 m lower than without karst (highest point -72 m). Set `focus: 0` for a
+uniform lowering, or add `species: carbonate` with the groundwater
+geochemistry to send the dissolved carbonate to the ocean with the rivers.
+
 ## Running it
 
 ```bash
-python scripts/make_inputs.py   # island mesh, sea-level curve and the seven input files
-./run_all.sh                    # the seven runs (4 MPI ranks each, 3-5 min per run)
+python scripts/make_inputs.py   # island mesh, sea-level curve and the eight input files
+./run_all.sh                    # the eight runs (4 MPI ranks each, 3-7 min per run)
 ```
 
 Then open `view_Results.ipynb`: the island through time, maps of the wave
 energy, reef thickness and elevation of every run, and sections west-east and
-south-north coloured by lithology (reef pink). The plotting functions are in
+south-north coloured by lithology (reef pink), and the karst run
+(`karst()`). The plotting functions are in
 `scripts/atoll.py`. A 3-D view of the stratigraphy in ParaView:
 `gospl-strata-volume --h5dir sim_east/h5 --outdir sim_east/strata --field
 lithologies --tout 2.e4` (see the `mixed_carbonate_clastic` README).

@@ -11,14 +11,14 @@ gravity currents (`gravity:`). It needs the `feat/gravity-carbonates-karst` bran
 - **Carbonates where the water is clear**: two wet catchments feed two large
   deltas. The factories stop where river sediment accumulates (`sedrate`)
   and in turbid water (`turbidity`, the river mud in transit): the delta
-  corridors stay free of carbonate (14 % of the delta deposits), the
+  corridors stay free of carbonate (15 % of the delta deposits), the
   carbonate grows on the shallow flanks of the delta lobes and on the coast
-  between the deltas (35 % of its deposits).
+  between the deltas (31 % of its deposits).
 - **Why turbidity, not only deposition**: on this margin the river load
   crosses the shallow carbonate belt without settling, so the `sedrate`
   control alone cannot tell the deltas from the coast between them
-  (production over the deltas / between: 0.98); with the `turbidity`
-  control, 0.59.
+  (production over the deltas / between: 1.11); with the `turbidity`
+  control, 0.69.
 - **Reciprocal sedimentation**: the production follows the sea level. During
   the fall the rivers build clastic clinoforms and the production almost
   stops; during the rise carbonate covers the flooded shelf again.
@@ -50,12 +50,12 @@ differs from the reference.
 
 | Run | Carbonate produced (km3): framework + loose | Carbonate share of the deposits: deltas / between | Production over the deltas / between |
 |---|---|---|---|
-| nocontrol | 160 + 452 | 0.37 / 0.52 | 1.01 |
-| sedrate | 131 + 343 | 0.32 / 0.46 | 0.98 |
-| mixed | 58 + 156 | 0.14 / 0.35 | 0.59 |
-| wavecontrol | 39 + 148 | 0.13 / 0.28 | 0.70 |
-| waves | 41 + 161 | 0.15 / 0.36 | 0.54 |
-| gravity | 77 + 210 | 0.21 / 0.33 | 0.71 |
+| nocontrol | 162 + 455 | 0.39 / 0.50 | 1.01 |
+| sedrate | 133 + 349 | 0.32 / 0.43 | 1.11 |
+| mixed | 57 + 154 | 0.15 / 0.31 | 0.69 |
+| wavecontrol | 39 + 147 | 0.13 / 0.30 | 0.78 |
+| waves | 40 + 154 | 0.15 / 0.30 | 0.51 |
+| gravity | 78 + 213 | 0.22 / 0.29 | 0.80 |
 
 ## The set-up, block by block (`input-mixed.yml`)
 
