@@ -40,7 +40,7 @@ def build(width, out):
     finally:
         os.chdir(cwd)
     for f in ("mesh.jig", "mesh.log", "mesh.msh", "mesh-MESH.msh", "mesh-HFUN.msh",
-              "mesh_triangles.nc", "cellWidthVsLatLon.nc"):
+              "mesh_triangles.nc", "cellWidthVsLatLon.nc", "graph.info"):
         p = os.path.join(folder, f)
         if os.path.exists(p):
             os.remove(p)
