@@ -8,12 +8,12 @@ _Series of examples to illustrate the functionalities of goSPL._
 
 
 [![DOI](https://joss.theoj.org/papers/10.21105/joss.02804/status.svg)](https://doi.org/10.21105/joss.02804)
-[![Docs](https://readthedocs.org/projects/gospl/badge/?version=latest)](https://gospl.readthedocs.io/en/latest/)
+[![Docs](https://readthedocs.org/projects/gospl/badge/?version=feat-gravity-carbonates-karst)](https://gospl.readthedocs.io/en/feat-gravity-carbonates-karst/)
 [![Docker](https://img.shields.io/docker/v/geodels/gospl-examples?sort=semver&logo=docker&logoColor=white&label=Docker%20Hub)](https://hub.docker.com/r/geodels/gospl-examples)
 [![Image size](https://img.shields.io/docker/image-size/geodels/gospl-examples/latest?logo=docker&logoColor=white&label=image%20size)](https://hub.docker.com/r/geodels/gospl-examples)
 [<img src="https://github.com/codespaces/badge.svg" alt="Open in GitHub Codespaces" height="20">](https://codespaces.new/Geodels/goSPL-examples)
 
-Full docs are available at: https://gospl.readthedocs.io/en/latest/
+Full docs are available at: https://gospl.readthedocs.io/en/feat-gravity-carbonates-karst/
 
 ## Versions: branches and tags
 

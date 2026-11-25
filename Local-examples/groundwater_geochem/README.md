@@ -57,6 +57,6 @@ for the plotting pattern.
 
 The whole capability is the `groundwater:` section of [`input.yml`](input.yml) —
 each key is commented with its meaning and a sensible value. See the goSPL
-[groundwater technical guide](https://gospl.readthedocs.io/en/latest/tech_guide/groundwater.html)
-and the [input reference](https://gospl.readthedocs.io/en/latest/user_guide/surfproc.html#groundwater-duricrust)
+[groundwater technical guide](https://gospl.readthedocs.io/en/feat-gravity-carbonates-karst/tech_guide/groundwater.html)
+and the [input reference](https://gospl.readthedocs.io/en/feat-gravity-carbonates-karst/user_guide/groundwater.html)
 for the full formulation and parameter tables.
