@@ -7,7 +7,7 @@ that does not cover the sphere properly.
 ## 1. Get a global mesh
 
 **Download** a uniform global mesh from the
-[goSPL meshes folder](https://www.dropbox.com/scl/fo/kior7a0kf9ylqxnnn7vk5/AJfSqKiefxvb4fHik_uRfeQ?rlkey=mh9hpd1z0i7u8qwlgspdo2zdf&st=8c3i8fir&dl=0):
+[goSPL meshes folder](https://www.dropbox.com/scl/fo/kior7a0kf9ylqxnnn7vk5/AJfSqKiefxvb4fHik_uRfeQ?rlkey=dqa4mjsxigzcvl5bh4y610trj&st=7jqcqafe&dl=0):
 
 | Mesh | Cell width | Mean edge | Nodes | Use |
 |---|---|---|---|---|
