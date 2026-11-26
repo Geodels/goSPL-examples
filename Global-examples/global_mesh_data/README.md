@@ -9,19 +9,34 @@ that does not cover the sphere properly.
 **Download** a uniform global mesh from the
 [goSPL meshes folder](https://www.dropbox.com/scl/fo/kior7a0kf9ylqxnnn7vk5/AJfSqKiefxvb4fHik_uRfeQ?rlkey=mh9hpd1z0i7u8qwlgspdo2zdf&st=5pj3fxke&dl=0):
 
-| Mesh | Cell width | Mean edge | Nodes | Use |
-|---|---|---|---|---|
-| `global_20km` | 20 km | ~11.5 km | ~1.5 million | tests, long runs, a workstation |
-| `global_10km` | 10 km | ~5.7 km | ~5.9 million | regional detail on a global model, a cluster |
-| `global_5km` | 5 km | ~2.8 km | ~23.6 million | high resolution, an HPC facility |
+| Mesh | Node spacing (mean, range) | Nodes | `gospl_mesh_*.npz` | `mesh_*.nc` | Use |
+|---|---|---|---|---|---|
+| `global_20km` | 20.0 km (15.5 to 26.9) | 1,480,442 | 61 MB | 1.9 GB | tests, long runs, a workstation |
+| `global_10km` | 10.0 km (7.6 to 13.6) | 5,916,934 | 249 MB | 7.5 GB | continental detail, a small cluster |
+| `global_8km` | 8.0 km (6.1 to 11.0) | 9,246,354 | 390 MB | 11.7 GB | finer drainage, a cluster |
+| `global_5km` | 5.0 km (3.7 to 6.8) | 23,655,606 | 1.0 GB | 29.9 GB | high resolution, an HPC facility |
+
+All four are uniform (the same spacing everywhere), on a sphere of radius 6,371,220 m, with at
+most 8 neighbours per vertex (goSPL accepts up to 12). As a guide to the cost, the paper's
+strong-scaling runs used 96 to 528 processors for 5 km, 24 to 384 for 8 km and 16 to 288 for
+10 km; the size form of
+[Which modules do I need?](https://gospl.readthedocs.io/en/feat-gravity-carbonates-karst/user_guide/reference/modules.html)
+estimates the time and memory of your own set-up.
 
 Each folder holds:
 
-- `gospl_mesh_<w>km.npz`: the goSPL mesh, `v` (vertex coordinates, m), `c` (triangles) and
-  `z` (elevation, **zeros**: put your elevation in it, see below);
-- `mesh_<w>km.nc`: the same mesh as an MPAS/UGRID NetCDF, for the uxarray workflow of the
-  [continental_flux](../continental_flux) `build_inputs` notebook;
-- `info.json`: node count and edge lengths.
+- **`gospl_mesh_<w>km.npz`: the file goSPL needs.** `v` (vertex coordinates, m), `c` (triangles,
+  0-based) and `z` (elevation, **zeros**: put your elevation in it, see below). This is all a
+  goSPL run reads (`domain: npdata: ['gospl_mesh_<w>km', 'v', 'c', 'z']`), and all this notebook
+  uses.
+- **`mesh_<w>km.nc`: usually not needed.** The same mesh as an MPAS/UGRID NetCDF, used only by the
+  uxarray workflow of the [continental_flux](../continental_flux) `build_inputs` notebook
+  (`shared_scripts/umeshFcts`: `inter2UGRID` interpolates gridded data on the mesh cells,
+  `get_Tectonic` derives the vertical tectonic forcing from successive paleo-elevations, and the
+  file can be opened in ParaView to look at the Voronoi cells). It is large because it stores the
+  full Voronoi geometry (cell areas, edges, vertices and the neighbours of each), which goSPL
+  rebuilds itself from `v` and `c`. Download it only for that workflow.
+- `info.json`: node and triangle counts, spacing, maximum vertex degree.
 
 **Or build your own** (any resolution, or refined where you need it, e.g. fine on the
 continents and coarse in the deep ocean) with the
