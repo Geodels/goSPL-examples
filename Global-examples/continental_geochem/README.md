@@ -1,6 +1,6 @@
 # Global regional geochemistry — climate-zoned solute species (1 Myr)
 
-A **standard global application** of the Level-B geochemistry: the continents are
+A **standard global application** of the solute geochemistry: the continents are
 divided into **climate-zone provinces** that each shed a characteristic solute
 species, chemical weathering is driven by a **latitudinal + altitude temperature**
 field (Arrhenius), the dissolved load is routed **down the rivers to the ocean**,
