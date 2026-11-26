@@ -1,7 +1,7 @@
 # Groundwater, duricrust & conservative solute geochemistry (local)
 
 A local (flat-mesh) example illustrating goSPL's **water table**, **capillary-fringe
-duricrust**, and **Level-B conservative solute geochemistry** with two tracers.
+duricrust**, and **conservative solute geochemistry** with two tracers.
 It is derived from [`../soil_generation`](../soil_generation) — same flat mesh and
 soil/regolith setup — with the opt-in `groundwater:` block added.
 
